@@ -323,17 +323,10 @@ namespace xinchaothegioi
 
         private void đăngNhậpToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmLogin loginForm = new frmLogin();
-            if (loginForm.ShowDialog() == DialogResult.OK)
-            {
-                SetControlsVisible(true);
-                MessageBox.Show("Đăng nhập thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            else if (loginForm.DialogResult == DialogResult.Abort)
-            {
-                frmLoginError errorForm = new frmLoginError();
-                errorForm.ShowDialog();
-            }
+            // Temporarily disable login and just show controls
+            SetControlsVisible(true);
+            MessageBox.Show("Đăng nhập thành công (demo mode)!", "Thông báo", 
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void HideAllExceptMenu()
@@ -659,6 +652,14 @@ namespace xinchaothegioi
 
         private void mnuViewRevenue_Click(object sender, EventArgs e)
         {
+            // Kiểm tra dữ liệu trước khi mở form
+            if (dgvInformaton.Rows.Count == 0 || (dgvInformaton.Rows.Count == 1 && dgvInformaton.AllowUserToAddRows))
+            {
+                MessageBox.Show("Chưa có dữ liệu vé để xem doanh thu!\nVui lòng bán vé trước khi xem doanh thu.", 
+                    "Không có dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             // Mở form xem doanh thu
             ViewRevenue revenueForm = new ViewRevenue();
             

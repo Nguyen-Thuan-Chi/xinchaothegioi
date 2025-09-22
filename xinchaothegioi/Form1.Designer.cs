@@ -63,6 +63,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.btnSeat1 = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.dtpSaleDate = new System.Windows.Forms.DateTimePicker();
             this.dgvInformaton = new System.Windows.Forms.DataGridView();
             this.colInvoiceId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colCustomerName = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -70,10 +71,16 @@
             this.colPhone = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colRegion = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colSeat = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTicketCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTotalAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colSaleDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnAddRegion = new System.Windows.Forms.Button();
+            this.cboSelectMovie = new System.Windows.Forms.ComboBox();
             this.cboRegion = new System.Windows.Forms.ComboBox();
             this.lblRegion = new System.Windows.Forms.Label();
             this.txtPhone = new System.Windows.Forms.TextBox();
+            this.lblSaleDate = new System.Windows.Forms.Label();
+            this.lblSelectMovie = new System.Windows.Forms.Label();
             this.lblPhone = new System.Windows.Forms.Label();
             this.rdoFemale = new System.Windows.Forms.RadioButton();
             this.rdoMale = new System.Windows.Forms.RadioButton();
@@ -89,13 +96,6 @@
             this.btnExit = new System.Windows.Forms.Button();
             this.btnEdit = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
-            this.colTicketCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colTotalAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colSaleDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.lblSelectMovie = new System.Windows.Forms.Label();
-            this.cboSelectMovie = new System.Windows.Forms.ComboBox();
-            this.dtpSaleDate = new System.Windows.Forms.DateTimePicker();
-            this.lblSaleDate = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -110,7 +110,7 @@
             this.mnuFunctions});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1099, 30);
+            this.menuStrip1.Size = new System.Drawing.Size(1099, 28);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -127,14 +127,14 @@
             // mnuSystem_Login
             // 
             this.mnuSystem_Login.Name = "mnuSystem_Login";
-            this.mnuSystem_Login.Size = new System.Drawing.Size(224, 26);
+            this.mnuSystem_Login.Size = new System.Drawing.Size(165, 26);
             this.mnuSystem_Login.Text = "Đăng nhập";
             this.mnuSystem_Login.Click += new System.EventHandler(this.đăngNhậpToolStripMenuItem_Click);
             // 
             // mnuSystem_Exit
             // 
             this.mnuSystem_Exit.Name = "mnuSystem_Exit";
-            this.mnuSystem_Exit.Size = new System.Drawing.Size(224, 26);
+            this.mnuSystem_Exit.Size = new System.Drawing.Size(165, 26);
             this.mnuSystem_Exit.Text = "Thoát";
             // 
             // mnuFunctions
@@ -152,20 +152,20 @@
             // mnuFunctions_SellTickets
             // 
             this.mnuFunctions_SellTickets.Name = "mnuFunctions_SellTickets";
-            this.mnuFunctions_SellTickets.Size = new System.Drawing.Size(224, 26);
+            this.mnuFunctions_SellTickets.Size = new System.Drawing.Size(208, 26);
             this.mnuFunctions_SellTickets.Text = "Bán vé";
             // 
             // mnuFunctions_ViewRevenue
             // 
             this.mnuFunctions_ViewRevenue.Name = "mnuFunctions_ViewRevenue";
-            this.mnuFunctions_ViewRevenue.Size = new System.Drawing.Size(224, 26);
+            this.mnuFunctions_ViewRevenue.Size = new System.Drawing.Size(208, 26);
             this.mnuFunctions_ViewRevenue.Text = "xem doanh thu";
             this.mnuFunctions_ViewRevenue.Click += new System.EventHandler(this.mnuViewRevenue_Click);
             // 
             // mnuFunctions_Reports
             // 
             this.mnuFunctions_Reports.Name = "mnuFunctions_Reports";
-            this.mnuFunctions_Reports.Size = new System.Drawing.Size(224, 26);
+            this.mnuFunctions_Reports.Size = new System.Drawing.Size(208, 26);
             this.mnuFunctions_Reports.Text = "báo cáo thống kê";
             // 
             // groupBox1
@@ -492,6 +492,13 @@
             this.groupBox2.Text = "thông tin khách hàng";
             this.groupBox2.Visible = false;
             // 
+            // dtpSaleDate
+            // 
+            this.dtpSaleDate.Location = new System.Drawing.Point(299, 121);
+            this.dtpSaleDate.Name = "dtpSaleDate";
+            this.dtpSaleDate.Size = new System.Drawing.Size(200, 22);
+            this.dtpSaleDate.TabIndex = 11;
+            // 
             // dgvInformaton
             // 
             this.dgvInformaton.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -556,6 +563,27 @@
             this.colSeat.Name = "colSeat";
             this.colSeat.Width = 125;
             // 
+            // colTicketCount
+            // 
+            this.colTicketCount.HeaderText = "Số lượng vé";
+            this.colTicketCount.MinimumWidth = 6;
+            this.colTicketCount.Name = "colTicketCount";
+            this.colTicketCount.Width = 125;
+            // 
+            // colTotalAmount
+            // 
+            this.colTotalAmount.HeaderText = "Thành tiền";
+            this.colTotalAmount.MinimumWidth = 6;
+            this.colTotalAmount.Name = "colTotalAmount";
+            this.colTotalAmount.Width = 125;
+            // 
+            // colSaleDate
+            // 
+            this.colSaleDate.HeaderText = "Ngày bán vé";
+            this.colSaleDate.MinimumWidth = 6;
+            this.colSaleDate.Name = "colSaleDate";
+            this.colSaleDate.Width = 125;
+            // 
             // btnAddRegion
             // 
             this.btnAddRegion.Location = new System.Drawing.Point(401, 73);
@@ -566,6 +594,16 @@
             this.btnAddRegion.UseVisualStyleBackColor = true;
             this.btnAddRegion.Visible = false;
             this.btnAddRegion.Click += new System.EventHandler(this.btnAddRegion_Click);
+            // 
+            // cboSelectMovie
+            // 
+            this.cboSelectMovie.FormattingEnabled = true;
+            this.cboSelectMovie.Location = new System.Drawing.Point(82, 117);
+            this.cboSelectMovie.Name = "cboSelectMovie";
+            this.cboSelectMovie.Size = new System.Drawing.Size(121, 24);
+            this.cboSelectMovie.TabIndex = 8;
+            this.cboSelectMovie.Visible = false;
+            this.cboSelectMovie.SelectedIndexChanged += new System.EventHandler(this.cboRegion_SelectedIndexChanged);
             // 
             // cboRegion
             // 
@@ -593,6 +631,25 @@
             this.txtPhone.Size = new System.Drawing.Size(112, 22);
             this.txtPhone.TabIndex = 6;
             this.txtPhone.Visible = false;
+            // 
+            // lblSaleDate
+            // 
+            this.lblSaleDate.AutoSize = true;
+            this.lblSaleDate.Location = new System.Drawing.Point(209, 125);
+            this.lblSaleDate.Name = "lblSaleDate";
+            this.lblSaleDate.Size = new System.Drawing.Size(84, 16);
+            this.lblSaleDate.TabIndex = 5;
+            this.lblSaleDate.Text = "Ngày bán vé";
+            // 
+            // lblSelectMovie
+            // 
+            this.lblSelectMovie.AutoSize = true;
+            this.lblSelectMovie.Location = new System.Drawing.Point(6, 121);
+            this.lblSelectMovie.Name = "lblSelectMovie";
+            this.lblSelectMovie.Size = new System.Drawing.Size(70, 16);
+            this.lblSelectMovie.TabIndex = 5;
+            this.lblSelectMovie.Text = "Chọn phim";
+            this.lblSelectMovie.Click += new System.EventHandler(this.lblSelectMovie_Click);
             // 
             // lblPhone
             // 
@@ -749,63 +806,6 @@
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Visible = false;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
-            // 
-            // colTicketCount
-            // 
-            this.colTicketCount.HeaderText = "Số lượng vé";
-            this.colTicketCount.MinimumWidth = 6;
-            this.colTicketCount.Name = "colTicketCount";
-            this.colTicketCount.Width = 125;
-            // 
-            // colTotalAmount
-            // 
-            this.colTotalAmount.HeaderText = "Thành tiền";
-            this.colTotalAmount.MinimumWidth = 6;
-            this.colTotalAmount.Name = "colTotalAmount";
-            this.colTotalAmount.Width = 125;
-            // 
-            // colSaleDate
-            // 
-            this.colSaleDate.HeaderText = "Ngày bán vé";
-            this.colSaleDate.MinimumWidth = 6;
-            this.colSaleDate.Name = "colSaleDate";
-            this.colSaleDate.Width = 125;
-            // 
-            // lblSelectMovie
-            // 
-            this.lblSelectMovie.AutoSize = true;
-            this.lblSelectMovie.Location = new System.Drawing.Point(6, 121);
-            this.lblSelectMovie.Name = "lblSelectMovie";
-            this.lblSelectMovie.Size = new System.Drawing.Size(70, 16);
-            this.lblSelectMovie.TabIndex = 5;
-            this.lblSelectMovie.Text = "Chọn phim";
-            this.lblSelectMovie.Click += new System.EventHandler(this.lblSelectMovie_Click);
-            // 
-            // cboSelectMovie
-            // 
-            this.cboSelectMovie.FormattingEnabled = true;
-            this.cboSelectMovie.Location = new System.Drawing.Point(82, 117);
-            this.cboSelectMovie.Name = "cboSelectMovie";
-            this.cboSelectMovie.Size = new System.Drawing.Size(121, 24);
-            this.cboSelectMovie.TabIndex = 8;
-            this.cboSelectMovie.Visible = false;
-            this.cboSelectMovie.SelectedIndexChanged += new System.EventHandler(this.cboRegion_SelectedIndexChanged);
-            // 
-            // dtpSaleDate
-            // 
-            this.dtpSaleDate.Location = new System.Drawing.Point(299, 121);
-            this.dtpSaleDate.Name = "dtpSaleDate";
-            this.dtpSaleDate.Size = new System.Drawing.Size(200, 22);
-            this.dtpSaleDate.TabIndex = 11;
-            // 
-            // lblSaleDate
-            // 
-            this.lblSaleDate.AutoSize = true;
-            this.lblSaleDate.Location = new System.Drawing.Point(209, 125);
-            this.lblSaleDate.Name = "lblSaleDate";
-            this.lblSaleDate.Size = new System.Drawing.Size(84, 16);
-            this.lblSaleDate.TabIndex = 5;
-            this.lblSaleDate.Text = "Ngày bán vé";
             // 
             // frmMain1
             // 
