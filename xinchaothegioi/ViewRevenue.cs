@@ -1,49 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using System.IO;
+using System.Text;
 
 namespace xinchaothegioi
 {
     public partial class ViewRevenue : Form
     {
-        private DataTable revenueData;
-        private DataGridView sourceDataGridView;
+        // Strongly typed revenue record
+        private class RevenueRecord
+        {
+            public DateTime SaleDate { get; set; }
+            public int TicketCount { get; set; }
+            public decimal Amount { get; set; }
+            public string Region { get; set; }
+            public string InvoiceId { get; set; }
+            public string CustomerName { get; set; }
+            public string Gender { get; set; }
+            public string Phone { get; set; }
+            public string Seats { get; set; }
+        }
+
+        private readonly List<RevenueRecord> _allRecords = new List<RevenueRecord>();
+        private DataGridView _sourceGrid;
+        private readonly CultureInfo _vn = new CultureInfo("vi-VN");
+        private readonly string _dateFormat = "dd/MM/yyyy"; // Format bên Form1 dùng
 
         public ViewRevenue()
         {
             InitializeComponent();
-            InitializeForm();
-            InitializeControls();
-            InitializeCharts();
+            InitForm();
+            InitControls();
+            InitCharts();
         }
 
-        private void InitializeForm()
+        private void InitForm()
         {
-            this.Text = "Báo cáo doanh thu bán vé";
-            this.WindowState = FormWindowState.Maximized;
-            this.StartPosition = FormStartPosition.CenterScreen;
+            Text = "Báo cáo doanh thu bán vé";
+            WindowState = FormWindowState.Maximized;
+            StartPosition = FormStartPosition.CenterScreen;
         }
 
-        private void InitializeControls()
+        private void InitControls()
         {
-            // Setup region filter ComboBox
+            // Regions
             cboRegionFilter.Items.Clear();
             cboRegionFilter.Items.Add("Tất cả");
-            if (RegionManager.Regions != null)
-            {
-                cboRegionFilter.Items.AddRange(RegionManager.Regions.ToArray());
-            }
+            cboRegionFilter.Items.AddRange(RegionManager.Regions.ToArray());
             cboRegionFilter.SelectedIndex = 0;
 
-            // Setup movie selection ComboBox (placeholder for future use)
+            // Movies (placeholder)
             cboSelectMovie.Items.Clear();
             cboSelectMovie.Items.Add("Tất cả");
             cboSelectMovie.Items.Add("Phim hành động");
@@ -51,579 +64,382 @@ namespace xinchaothegioi
             cboSelectMovie.Items.Add("Phim kinh dị");
             cboSelectMovie.SelectedIndex = 0;
 
-            // Setup DateTimePickers
-            dtpFromDate.Value = DateTime.Now.AddMonths(-1);
-            dtpToDate.Value = DateTime.Now;
-            dtpFromDate.Format = DateTimePickerFormat.Short;
-            dtpToDate.Format = DateTimePickerFormat.Short;
+            dtpFromDate.Format = DateTimePickerFormat.Custom;
+            dtpToDate.Format = DateTimePickerFormat.Custom;
+            dtpFromDate.CustomFormat = _dateFormat;
+            dtpToDate.CustomFormat = _dateFormat;
+            dtpToDate.Value = DateTime.Now.Date;
+            dtpFromDate.Value = DateTime.Now.Date.AddMonths(-1);
 
-            // Setup DataGridView columns to match source
-            SetupDataGridViewColumns();
-
-            // Initialize summary labels
-            lblTotalTickets.Text = "Tổng số vé: 0";
-            lblTotalRevenue.Text = "Tổng doanh thu: 0 VND";
+            ConfigureGrid();
+            UpdateSummary(Enumerable.Empty<RevenueRecord>());
         }
 
-        private void SetupDataGridViewColumns()
+        private void ConfigureGrid()
         {
             dgvRevenue.Columns.Clear();
+            dgvRevenue.ReadOnly = true;
+            dgvRevenue.AllowUserToAddRows = false;
+            dgvRevenue.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvRevenue.MultiSelect = false;
+            dgvRevenue.RowHeadersVisible = false;
+            dgvRevenue.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
             dgvRevenue.Columns.Add("colInvoiceId", "Mã hóa đơn");
             dgvRevenue.Columns.Add("colCustomerName", "Tên khách hàng");
             dgvRevenue.Columns.Add("colGender", "Giới tính");
             dgvRevenue.Columns.Add("colPhone", "SĐT");
             dgvRevenue.Columns.Add("colRegion", "Khu vực");
             dgvRevenue.Columns.Add("colSeat", "Ghế ngồi");
-            dgvRevenue.Columns.Add("colTicketCount", "Số lượng vé");
-            dgvRevenue.Columns.Add("colTotalAmount", "Thành tiền");
+            dgvRevenue.Columns.Add("colTicketCount", "Số vé bán");
+            dgvRevenue.Columns.Add("colTotalAmount", "Doanh thu");
             dgvRevenue.Columns.Add("colSaleDate", "Ngày bán vé");
-
-            // Configure DataGridView properties
-            dgvRevenue.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvRevenue.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvRevenue.MultiSelect = false;
-            dgvRevenue.AllowUserToAddRows = false;
-            dgvRevenue.ReadOnly = true;
-            dgvRevenue.RowHeadersVisible = false;
         }
 
-        private void InitializeCharts()
+        private void InitCharts()
         {
-            InitializeColumnChart();
-            InitializePieChart();
+            InitColumnChart();
+            InitPieChart();
         }
 
-        private void InitializeColumnChart()
+        private void InitColumnChart()
         {
             chartRevenueColumn.Series.Clear();
             chartRevenueColumn.ChartAreas.Clear();
-            
-            // Create ChartArea
-            ChartArea chartArea = new ChartArea("MainArea");
-            chartArea.AxisX.Title = "Ngày";
-            chartArea.AxisY.Title = "Doanh thu (VND)";
-            chartArea.AxisX.Interval = 1;
-            chartArea.AxisX.LabelStyle.Angle = -45;
-            chartArea.AxisY.LabelStyle.Format = "N0";
-            chartRevenueColumn.ChartAreas.Add(chartArea);
-            
-            // Create Series
-            Series series = new Series("Doanh thu");
-            series.ChartType = SeriesChartType.Column;
-            series.Color = Color.SkyBlue;
-            series.IsValueShownAsLabel = true;
-            series.LabelFormat = "N0";
-            chartRevenueColumn.Series.Add(series);
-            
-            // Set title
+            var area = new ChartArea("Main");
+            area.AxisX.Title = "Ngày";
+            area.AxisY.Title = "Doanh thu (VND)";
+            area.AxisX.Interval = 1;
+            area.AxisX.LabelStyle.Angle = -45;
+            area.AxisY.LabelStyle.Format = "N0";
+            chartRevenueColumn.ChartAreas.Add(area);
+
+            var s = new Series("Doanh thu")
+            {
+                ChartType = SeriesChartType.Column,
+                IsValueShownAsLabel = true,
+                LabelFormat = "N0",
+                Color = Color.SteelBlue
+            };
+            chartRevenueColumn.Series.Add(s);
             chartRevenueColumn.Titles.Clear();
-            chartRevenueColumn.Titles.Add("Biểu đồ doanh thu theo ngày");
+            chartRevenueColumn.Titles.Add("Doanh thu theo ngày");
         }
 
-        private void InitializePieChart()
+        private void InitPieChart()
         {
             chartRevenuePie.Series.Clear();
             chartRevenuePie.ChartAreas.Clear();
-            
-            // Create ChartArea
-            ChartArea chartArea = new ChartArea("PieArea");
-            chartRevenuePie.ChartAreas.Add(chartArea);
-            
-            // Create Series
-            Series series = new Series("Doanh thu theo khu vực");
-            series.ChartType = SeriesChartType.Pie;
-            series.IsValueShownAsLabel = true;
-            series.LabelFormat = "N0";
-            series["PieLabelStyle"] = "Outside";
-            chartRevenuePie.Series.Add(series);
-            
-            // Set title
+            var area = new ChartArea("Pie");
+            chartRevenuePie.ChartAreas.Add(area);
+            var s = new Series("Doanh thu theo khu vực")
+            {
+                ChartType = SeriesChartType.Pie,
+                IsValueShownAsLabel = true,
+                LabelFormat = "N0"
+            };
+            s["PieLabelStyle"] = "Outside";
+            chartRevenuePie.Series.Add(s);
             chartRevenuePie.Titles.Clear();
-            chartRevenuePie.Titles.Add("Biểu đồ doanh thu theo khu vực");
+            chartRevenuePie.Titles.Add("Doanh thu theo khu vực");
         }
 
+        // Public API --------------------------------------------------------
         public void SetRevenueData(DataGridView sourceGrid)
         {
-            try
+            _sourceGrid = sourceGrid;
+            _allRecords.Clear();
+            if (sourceGrid == null)
             {
-                sourceDataGridView = sourceGrid;
-                
-                if (sourceGrid == null)
-                {
-                    MessageBox.Show("Không nhận được dữ liệu từ form chính!", "Lỗi", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
-
-                int actualRowCount = 0;
-                foreach (DataGridViewRow row in sourceGrid.Rows)
-                {
-                    if (!row.IsNewRow) actualRowCount++;
-                }
-
-                if (actualRowCount == 0)
-                {
-                    MessageBox.Show("Không có dữ liệu để hiển thị!", "Thông báo", 
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                LoadRevenueData();
-                RefreshDisplay();
-                
-                MessageBox.Show($"Đã tải thành công {actualRowCount} bản ghi dữ liệu!", 
-                    "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Không nhận được dữ liệu nguồn!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
-            catch (Exception ex)
+
+            int success = 0, fail = 0;
+            foreach (DataGridViewRow r in sourceGrid.Rows)
             {
-                MessageBox.Show($"Lỗi khi tải dữ liệu: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (r.IsNewRow) continue;
+                if (TryParseRow(r, out var record))
+                {
+                    _allRecords.Add(record);
+                    success++;
+                }
+                else fail++;
             }
+
+            if (success == 0)
+            {
+                MessageBox.Show("Không thể đọc dữ liệu vé!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            else if (fail > 0)
+            {
+                MessageBox.Show($"Đọc {success} dòng, lỗi {fail} dòng.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            RefreshAll();
         }
 
-        private void LoadRevenueData()
+        // Parsing -----------------------------------------------------------
+        private bool TryParseRow(DataGridViewRow row, out RevenueRecord rec)
         {
-            // Create DataTable to store revenue data
-            revenueData = new DataTable();
-            revenueData.Columns.Add("Ngày", typeof(DateTime));
-            revenueData.Columns.Add("Số vé bán", typeof(int));
-            revenueData.Columns.Add("Doanh thu", typeof(decimal));
-            revenueData.Columns.Add("Khu vực", typeof(string));
-            revenueData.Columns.Add("Mã hóa đơn", typeof(string));
-            revenueData.Columns.Add("Tên khách hàng", typeof(string));
-            revenueData.Columns.Add("Giới tính", typeof(string));
-            revenueData.Columns.Add("SĐT", typeof(string));
-            revenueData.Columns.Add("Ghế ngồi", typeof(string));
-
-            int successCount = 0;
-            int errorCount = 0;
-
-            if (sourceDataGridView != null)
-            {
-                foreach (DataGridViewRow row in sourceDataGridView.Rows)
-                {
-                    if (row.IsNewRow) continue;
-
-                    try
-                    {
-                        // Get data from source DataGridView
-                        string invoiceId = GetCellValue(row, "colInvoiceId");
-                        string customerName = GetCellValue(row, "colCustomerName");
-                        string gender = GetCellValue(row, "colGender");
-                        string phone = GetCellValue(row, "colPhone");
-                        string region = GetCellValue(row, "colRegion");
-                        string seats = GetCellValue(row, "colSeat");
-                        string ticketCountStr = GetCellValue(row, "colTicketCount");
-                        string totalAmountStr = GetCellValue(row, "colTotalAmount");
-                        string saleDateStr = GetCellValue(row, "colSaleDate");
-
-                        // Parse data
-                        if (DateTime.TryParse(saleDateStr, out DateTime saleDate) &&
-                            int.TryParse(ticketCountStr, out int ticketCount) &&
-                            !string.IsNullOrEmpty(totalAmountStr))
-                        {
-                            // Clean and parse amount (remove "VND", commas, dots)
-                            string cleanAmount = totalAmountStr.Replace(" VND", "")
-                                                                .Replace("VND", "")
-                                                                .Replace(",", "")
-                                                                .Replace(".", "")
-                                                                .Trim();
-                            
-                            if (decimal.TryParse(cleanAmount, out decimal amount))
-                            {
-                                revenueData.Rows.Add(saleDate, ticketCount, amount, region, 
-                                    invoiceId, customerName, gender, phone, seats);
-                                successCount++;
-                            }
-                            else
-                            {
-                                errorCount++;
-                            }
-                        }
-                        else
-                        {
-                            errorCount++;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        errorCount++;
-                        System.Diagnostics.Debug.WriteLine($"Error processing row: {ex.Message}");
-                    }
-                }
-            }
-
-            if (errorCount > 0)
-            {
-                MessageBox.Show($"Đã xử lý {successCount} dòng thành công, {errorCount} dòng có lỗi", 
-                    "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
-
-        private string GetCellValue(DataGridViewRow row, string columnName)
-        {
+            rec = null;
             try
             {
-                if (row.Cells[columnName] != null && row.Cells[columnName].Value != null)
+                string invoiceId = Cell(row, "colInvoiceId");
+                string name = Cell(row, "colCustomerName");
+                string gender = Cell(row, "colGender");
+                string phone = Cell(row, "colPhone");
+                string region = Cell(row, "colRegion");
+                string seats = Cell(row, "colSeat");
+                string ticketStr = Cell(row, "colTicketCount");
+                string amountStr = Cell(row, "colTotalAmount");
+                string dateStr = Cell(row, "colSaleDate");
+
+                // Parse date (exact format used when saving)
+                if (!DateTime.TryParseExact(dateStr, _dateFormat, _vn, DateTimeStyles.None, out DateTime saleDate))
                 {
-                    return row.Cells[columnName].Value.ToString();
+                    // fallback general parse
+                    if (!DateTime.TryParse(dateStr, _vn, DateTimeStyles.None, out saleDate))
+                        return false;
                 }
-                return "";
+
+                if (!int.TryParse(ticketStr, out int ticketCount)) return false;
+
+                // Clean amount: keep digits only
+                string digits = Regex.Replace(amountStr ?? string.Empty, "[^0-9]", "");
+                if (string.IsNullOrEmpty(digits)) return false;
+                if (!decimal.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out decimal amount))
+                    return false;
+
+                rec = new RevenueRecord
+                {
+                    SaleDate = saleDate.Date,
+                    TicketCount = ticketCount,
+                    Amount = amount,
+                    Region = region,
+                    InvoiceId = invoiceId,
+                    CustomerName = name,
+                    Gender = gender,
+                    Phone = phone,
+                    Seats = seats
+                };
+                return true;
             }
             catch
             {
-                return "";
+                return false;
             }
         }
 
-        private void RefreshDisplay()
-        {
-            UpdateFilteredData();
-            UpdateCharts();
-            UpdateSummaryLabels();
-        }
-
-        private void UpdateFilteredData()
+        private string Cell(DataGridViewRow row, string name)
         {
             try
             {
-                var filteredData = GetFilteredData();
-                
-                dgvRevenue.Rows.Clear();
-                
-                if (filteredData.Any())
-                {
-                    foreach (var row in filteredData)
-                    {
-                        dgvRevenue.Rows.Add(
-                            row["Mã hóa đơn"].ToString(),
-                            row["Tên khách hàng"].ToString(),
-                            row["Giới tính"].ToString(),
-                            row["SĐT"].ToString(),
-                            row["Khu vực"].ToString(),
-                            row["Ghế ngồi"].ToString(),
-                            row["Số vé bán"].ToString(),
-                            ((decimal)row["Doanh thu"]).ToString("N0") + " VND",
-                            ((DateTime)row["Ngày"]).ToString("dd/MM/yyyy")
-                        );
-                    }
-                }
-                else
-                {
-                    // Show "no data" message
-                    dgvRevenue.Rows.Add("Không có dữ liệu", "", "", "", "", "", "", "", "");
-                }
+                return row.Cells[name]?.Value?.ToString() ?? string.Empty;
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Lỗi khi hiển thị dữ liệu: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            catch { return string.Empty; }
         }
 
-        private void UpdateCharts()
+        // Filtering + Refresh -----------------------------------------------
+        private IEnumerable<RevenueRecord> ApplyFilters()
         {
-            UpdateColumnChart();
-            UpdatePieChart();
+            if (_allRecords.Count == 0) return Enumerable.Empty<RevenueRecord>();
+            DateTime from = dtpFromDate.Value.Date;
+            DateTime to = dtpToDate.Value.Date; // inclusive day
+            var q = _allRecords.Where(r => r.SaleDate >= from && r.SaleDate <= to);
+
+            string region = cboRegionFilter.SelectedItem?.ToString();
+            if (!string.IsNullOrEmpty(region) && region != "Tất cả")
+                q = q.Where(r => r.Region == region);
+
+            return q.ToList();
         }
 
-        private void UpdateColumnChart()
+        private void RefreshAll()
         {
-            try
-            {
-                chartRevenueColumn.Series["Doanh thu"].Points.Clear();
-                
-                var filteredData = GetFilteredData();
-
-                if (filteredData.Any())
-                {
-                    // Group by date and sum revenue
-                    var chartData = filteredData
-                        .GroupBy(row => ((DateTime)row["Ngày"]).Date)
-                        .Select(g => new { 
-                            Date = g.Key, 
-                            Revenue = g.Sum(row => (decimal)row["Doanh thu"]) 
-                        })
-                        .OrderBy(x => x.Date);
-
-                    foreach (var item in chartData)
-                    {
-                        chartRevenueColumn.Series["Doanh thu"].Points.AddXY(
-                            item.Date.ToString("dd/MM"), (double)item.Revenue);
-                    }
-                }
-                else
-                {
-                    chartRevenueColumn.Series["Doanh thu"].Points.AddXY("Không có dữ liệu", 0);
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error updating column chart: {ex.Message}");
-            }
+            var filtered = ApplyFilters();
+            FillGrid(filtered);
+            UpdateCharts(filtered);
+            UpdateSummary(filtered);
         }
 
-        private void UpdatePieChart()
+        private void FillGrid(IEnumerable<RevenueRecord> data)
         {
-            try
+            dgvRevenue.Rows.Clear();
+            foreach (var r in data)
             {
-                chartRevenuePie.Series["Doanh thu theo khu vực"].Points.Clear();
-                
-                var filteredData = GetFilteredData();
-
-                if (filteredData.Any())
-                {
-                    // Group by region and sum revenue
-                    var pieData = filteredData
-                        .GroupBy(row => row["Khu vực"].ToString())
-                        .Select(g => new { 
-                            Region = g.Key, 
-                            Revenue = g.Sum(row => (decimal)row["Doanh thu"]) 
-                        });
-
-                    foreach (var item in pieData)
-                    {
-                        var point = chartRevenuePie.Series["Doanh thu theo khu vực"].Points.Add((double)item.Revenue);
-                        point.LegendText = item.Region;
-                        point.Label = $"{item.Region}\n{item.Revenue:N0} VND";
-                    }
-                }
-                else
-                {
-                    var point = chartRevenuePie.Series["Doanh thu theo khu vực"].Points.Add(1);
-                    point.LegendText = "Không có dữ liệu";
-                    point.Label = "Không có dữ liệu";
-                    point.Color = Color.LightGray;
-                }
+                dgvRevenue.Rows.Add(
+                    r.InvoiceId,
+                    r.CustomerName,
+                    r.Gender,
+                    r.Phone,
+                    r.Region,
+                    r.Seats,
+                    r.TicketCount.ToString(),
+                    r.Amount.ToString("N0", _vn) + " VND",
+                    r.SaleDate.ToString(_dateFormat)
+                );
             }
-            catch (Exception ex)
+            if (dgvRevenue.Rows.Count == 0)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating pie chart: {ex.Message}");
+                dgvRevenue.Rows.Add("Không có dữ liệu", "", "", "", "", "", "", "", "");
             }
         }
 
-        private DataRow[] GetFilteredData()
+        // Charts ------------------------------------------------------------
+        private void UpdateCharts(IEnumerable<RevenueRecord> data)
         {
-            if (revenueData == null || revenueData.Rows.Count == 0)
-            {
-                return new DataRow[0];
-            }
-
-            var filteredData = revenueData.AsEnumerable();
-
-            // Filter by date range
-            DateTime fromDate = dtpFromDate.Value.Date;
-            DateTime toDate = dtpToDate.Value.Date.AddDays(1).AddTicks(-1);
-            
-            filteredData = filteredData.Where(row => 
-            {
-                DateTime date = (DateTime)row["Ngày"];
-                return date >= fromDate && date <= toDate;
-            });
-
-            // Filter by region
-            string selectedRegion = cboRegionFilter.SelectedItem?.ToString();
-            if (!string.IsNullOrEmpty(selectedRegion) && selectedRegion != "Tất cả")
-            {
-                filteredData = filteredData.Where(row => 
-                    row["Khu vực"].ToString() == selectedRegion);
-            }
-
-            return filteredData.ToArray();
+            UpdateColumnChart(data);
+            UpdatePieChart(data);
         }
 
-        private void UpdateSummaryLabels()
+        private void UpdateColumnChart(IEnumerable<RevenueRecord> data)
         {
-            try
-            {
-                var filteredData = GetFilteredData();
-
-                if (filteredData.Any())
-                {
-                    int totalTickets = filteredData.Sum(row => (int)row["Số vé bán"]);
-                    decimal totalRevenue = filteredData.Sum(row => (decimal)row["Doanh thu"]);
-                    
-                    lblTotalTickets.Text = $"Tổng số vé: {totalTickets:N0}";
-                    lblTotalRevenue.Text = $"Tổng doanh thu: {totalRevenue:N0} VND";
-                    
-                    // Update chart titles with filter info
-                    string filterInfo = $"Từ {dtpFromDate.Value:dd/MM/yyyy} đến {dtpToDate.Value:dd/MM/yyyy}";
-                    if (cboRegionFilter.SelectedItem?.ToString() != "Tất cả")
-                    {
-                        filterInfo += $" - {cboRegionFilter.SelectedItem}";
-                    }
-                    
-                    chartRevenueColumn.Titles[0].Text = $"Doanh thu theo ngày\n{filterInfo}";
-                    chartRevenuePie.Titles[0].Text = $"Doanh thu theo khu vực\n{filterInfo}";
-                }
-                else
-                {
-                    lblTotalTickets.Text = "Tổng số vé: 0";
-                    lblTotalRevenue.Text = "Tổng doanh thu: 0 VND";
-                    chartRevenueColumn.Titles[0].Text = "Không có dữ liệu trong khoảng thời gian này";
-                    chartRevenuePie.Titles[0].Text = "Không có dữ liệu trong khoảng thời gian này";
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error updating summary labels: {ex.Message}");
-            }
+            var series = chartRevenueColumn.Series["Doanh thu"];
+            series.Points.Clear();
+            var grouped = data
+                .GroupBy(r => r.SaleDate)
+                .OrderBy(g => g.Key)
+                .Select(g => new { Date = g.Key, Sum = g.Sum(x => x.Amount) });
+            foreach (var item in grouped)
+                series.Points.AddXY(item.Date.ToString("dd/MM"), (double)item.Sum);
+            if (!grouped.Any())
+                series.Points.AddXY("Không có dữ liệu", 0);
+            chartRevenueColumn.Titles[0].Text = BuildTitle("Doanh thu theo ngày");
         }
 
-        // Event handlers
-        private void ViewRevenue_Load(object sender, EventArgs e)
+        private void UpdatePieChart(IEnumerable<RevenueRecord> data)
         {
-            // Form loaded
-        }
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (revenueData != null)
+            var series = chartRevenuePie.Series["Doanh thu theo khu vực"];
+            series.Points.Clear();
+            var grouped = data
+                .GroupBy(r => string.IsNullOrEmpty(r.Region) ? "(Không xác định)" : r.Region)
+                .Select(g => new { Region = g.Key, Sum = g.Sum(x => x.Amount) })
+                .OrderByDescending(x => x.Sum);
+            foreach (var item in grouped)
             {
-                RefreshDisplay();
+                var p = series.Points.Add((double)item.Sum);
+                p.LegendText = item.Region;
+                p.Label = $"{item.Region}\n{item.Sum:N0}";
             }
-        }
-
-        private void dateTimePicker1_ValueChanged(object sender, EventArgs e)
-        {
-            if (revenueData != null)
+            if (!grouped.Any())
             {
-                RefreshDisplay();
+                var p = series.Points.Add(1);
+                p.LegendText = "Không có dữ liệu";
+                p.Label = "Không có dữ liệu";
+                p.Color = Color.LightGray;
             }
+            chartRevenuePie.Titles[0].Text = BuildTitle("Doanh thu theo khu vực");
         }
 
-        private void chart1_Click(object sender, EventArgs e)
+        private string BuildTitle(string baseTitle)
         {
-            // Chart click handler
+            string region = cboRegionFilter.SelectedItem?.ToString();
+            string extra = region != null && region != "Tất cả" ? " - " + region : string.Empty;
+            return $"{baseTitle}\nTừ {dtpFromDate.Value.ToString(_dateFormat)} đến {dtpToDate.Value.ToString(_dateFormat)}{extra}";
         }
+
+        // Summary -----------------------------------------------------------
+        private void UpdateSummary(IEnumerable<RevenueRecord> data)
+        {
+            int totalTickets = data.Sum(r => r.TicketCount);
+            decimal totalRevenue = data.Sum(r => r.Amount);
+            lblTotalTickets.Text = $"Tổng số vé: {totalTickets:N0}";
+            lblTotalRevenue.Text = $"Tổng doanh thu: {totalRevenue:N0} VND";
+        }
+
+        // Events ------------------------------------------------------------
+        private void ViewRevenue_Load(object sender, EventArgs e) { }
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e) { if (_allRecords.Count > 0) RefreshAll(); }
+        private void dateTimePicker1_ValueChanged(object sender, EventArgs e) { if (_allRecords.Count > 0) RefreshAll(); }
+        private void chart1_Click(object sender, EventArgs e) { }
 
         private void btnView_Click(object sender, EventArgs e)
         {
-            if (revenueData != null)
-            {
-                RefreshDisplay();
-                
-                var filteredData = GetFilteredData();
-                
-                if (filteredData.Length > 0)
-                {
-                    MessageBox.Show($"Hiển thị {filteredData.Length} bản ghi doanh thu!", 
-                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    MessageBox.Show("Không có dữ liệu trong khoảng thời gian đã chọn!", 
-                        "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                }
-            }
-            else
-            {
-                MessageBox.Show("Chưa có dữ liệu để hiển thị!", "Thông báo", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
+            RefreshAll();
+            var count = ApplyFilters().Count();
+            MessageBox.Show($"Hiển thị {count} bản ghi.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void btnToday_Click(object sender, EventArgs e)
         {
             dtpFromDate.Value = DateTime.Now.Date;
             dtpToDate.Value = DateTime.Now.Date;
-            
-            if (revenueData != null)
-            {
-                RefreshDisplay();
-                
-                var filteredData = GetFilteredData();
-                MessageBox.Show($"Hiển thị dữ liệu hôm nay: {filteredData.Length} bản ghi", 
-                    "Hôm nay", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
+            RefreshAll();
         }
 
         private void btnExport_Click(object sender, EventArgs e)
         {
             try
             {
-                SaveFileDialog saveDialog = new SaveFileDialog();
-                saveDialog.Filter = "CSV Files|*.csv|Image Files (Column Chart)|*.png|Image Files (Pie Chart)|*.png";
-                saveDialog.DefaultExt = "csv";
-                saveDialog.FileName = $"BaoCaoDoanhThu_{DateTime.Now:yyyyMMdd_HHmmss}";
-
-                if (saveDialog.ShowDialog() == DialogResult.OK)
+                var data = ApplyFilters();
+                if (!data.Any())
                 {
-                    string extension = Path.GetExtension(saveDialog.FileName).ToLower();
-                    
-                    switch (extension)
+                    MessageBox.Show("Không có dữ liệu để xuất!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                using (var dlg = new SaveFileDialog())
+                {
+                    dlg.Filter = "CSV Files|*.csv|Ảnh biểu đồ (*.png)|*.png";
+                    dlg.FileName = $"BaoCaoDoanhThu_{DateTime.Now:yyyyMMdd_HHmmss}";
+                    if (dlg.ShowDialog() != DialogResult.OK) return;
+
+                    string ext = Path.GetExtension(dlg.FileName).ToLower();
+                    if (ext == ".csv")
                     {
-                        case ".png":
-                            DialogResult chartChoice = MessageBox.Show(
-                                "Chọn 'Yes' để xuất biểu đồ cột, 'No' để xuất biểu đồ tròn", 
-                                "Chọn biểu đồ", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
-                            
-                            if (chartChoice == DialogResult.Yes)
-                                chartRevenueColumn.SaveImage(saveDialog.FileName, ChartImageFormat.Png);
-                            else if (chartChoice == DialogResult.No)
-                                chartRevenuePie.SaveImage(saveDialog.FileName, ChartImageFormat.Png);
-                            else
-                                return;
-                            break;
-                        case ".csv":
-                            ExportToCSV(saveDialog.FileName);
-                            break;
-                        default:
-                            MessageBox.Show("Định dạng file không được hỗ trợ!", "Lỗi", 
-                                MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
+                        ExportCsv(dlg.FileName, data);
+                    }
+                    else if (ext == ".png")
+                    {
+                        var choice = MessageBox.Show("Yes = biểu đồ cột, No = biểu đồ tròn", "Chọn biểu đồ", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                        if (choice == DialogResult.Yes)
+                            chartRevenueColumn.SaveImage(dlg.FileName, ChartImageFormat.Png);
+                        else if (choice == DialogResult.No)
+                            chartRevenuePie.SaveImage(dlg.FileName, ChartImageFormat.Png);
+                        else return;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Định dạng không hỗ trợ!", "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
                     }
 
-                    MessageBox.Show($"Đã xuất báo cáo thành công!\nFile: {saveDialog.FileName}", 
-                        "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Xuất thành công!", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Lỗi khi xuất báo cáo: {ex.Message}", "Lỗi", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Lỗi xuất: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void ExportToCSV(string fileName)
+        private void ExportCsv(string path, IEnumerable<RevenueRecord> data)
         {
-            var filteredData = GetFilteredData();
-            
-            using (StreamWriter writer = new StreamWriter(fileName, false, Encoding.UTF8))
+            using (var w = new StreamWriter(path, false, Encoding.UTF8))
             {
-                // Write header
-                writer.WriteLine("Mã hóa đơn,Tên khách hàng,Giới tính,SĐT,Khu vực,Ghế ngồi,Số vé bán,Doanh thu (VND),Ngày bán vé");
-                
-                // Write data
-                foreach (DataRow row in filteredData)
+                w.WriteLine("Mã hóa đơn,Tên khách hàng,Giới tính,SĐT,Khu vực,Ghế ngồi,Số vé bán,Doanh thu (VND),Ngày bán vé");
+                foreach (var r in data)
                 {
-                    DateTime date = (DateTime)row["Ngày"];
-                    int tickets = (int)row["Số vé bán"];
-                    decimal revenue = (decimal)row["Doanh thu"];
-                    string invoiceId = row["Mã hóa đơn"].ToString();
-                    string customerName = row["Tên khách hàng"].ToString();
-                    string gender = row["Giới tính"].ToString();
-                    string phone = row["SĐT"].ToString();
-                    string region = row["Khu vực"].ToString();
-                    string seats = row["Ghế ngồi"].ToString();
-                    
-                    writer.WriteLine($"{invoiceId},{customerName},{gender},{phone},{region},{seats},{tickets},{revenue:F0},{date:dd/MM/yyyy}");
+                    w.WriteLine($"{r.InvoiceId},{Escape(r.CustomerName)},{r.Gender},{r.Phone},{Escape(r.Region)},{Escape(r.Seats)},{r.TicketCount},{r.Amount:F0},{r.SaleDate.ToString(_dateFormat)}");
                 }
-                
-                // Write summary
-                writer.WriteLine();
-                writer.WriteLine("TỔNG KẾT:");
-                int totalTickets = filteredData.Sum(row => (int)row["Số vé bán"]);
-                decimal totalRevenue = filteredData.Sum(row => (decimal)row["Doanh thu"]);
-                writer.WriteLine($"Tổng số vé bán,{totalTickets}");
-                writer.WriteLine($"Tổng doanh thu,{totalRevenue:F0}");
-                writer.WriteLine($"Từ ngày,{dtpFromDate.Value:dd/MM/yyyy}");
-                writer.WriteLine($"Đến ngày,{dtpToDate.Value:dd/MM/yyyy}");
+                w.WriteLine();
+                w.WriteLine("TỔNG KẾT");
+                w.WriteLine($"Tổng số vé,{data.Sum(x => x.TicketCount)}");
+                w.WriteLine($"Tổng doanh thu,{data.Sum(x => x.Amount):F0}");
+                w.WriteLine($"Từ ngày,{dtpFromDate.Value.ToString(_dateFormat)}");
+                w.WriteLine($"Đến ngày,{dtpToDate.Value.ToString(_dateFormat)}");
                 if (cboRegionFilter.SelectedItem?.ToString() != "Tất cả")
-                {
-                    writer.WriteLine($"Khu vực,{cboRegionFilter.SelectedItem}");
-                }
+                    w.WriteLine($"Khu vực,{cboRegionFilter.SelectedItem}");
             }
+        }
+
+        private string Escape(string s)
+        {
+            if (s == null) return string.Empty;
+            if (s.Contains(",") || s.Contains("\""))
+                return "\"" + s.Replace("\"", "\"\"") + "\"";
+            return s;
         }
     }
 }

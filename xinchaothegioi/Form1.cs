@@ -323,10 +323,8 @@ namespace xinchaothegioi
 
         private void đăngNhậpToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // Temporarily disable login and just show controls
+            // (Login form tạm thời bị vô hiệu hóa) -> mở trực tiếp chức năng
             SetControlsVisible(true);
-            MessageBox.Show("Đăng nhập thành công (demo mode)!", "Thông báo", 
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void HideAllExceptMenu()
