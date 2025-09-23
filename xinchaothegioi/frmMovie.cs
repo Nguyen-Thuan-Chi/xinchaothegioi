@@ -19,6 +19,11 @@ namespace xinchaothegioi
         private bool _autoRefresh;
         private bool _isLoading;
         private Panel _currentSelectedPanel;
+        
+        // Smart polling variables
+        private System.Windows.Forms.Timer _smartPollingTimer;
+        private readonly object _pollingLock = new object();
+        private string _currentEndpoint;
 
         public MovieSummary SelectedMovie { get; private set; }
 
@@ -63,8 +68,55 @@ namespace xinchaothegioi
             this.FormClosing += frmMovie_FormClosing;
             flowMovies.Click += flowMovies_Click;
 
-            // KHÔNG gắn thêm timerRefresh.Tick ở đây nếu Designer đã gắn (tránh double fire)
-            // (Nếu muốn dùng trực tiếp async, có thể tháo trong Designer và gắn lại 1 nơi duy nhất)
+            // Khởi tạo smart polling timer (thay thế timer cũ)
+            InitializeSmartPolling();
+        }
+
+        private void InitializeSmartPolling()
+        {
+            // Timer này sẽ kiểm tra định kỳ nhưng chỉ gọi API khi cần thiết
+            _smartPollingTimer = new System.Windows.Forms.Timer();
+            _smartPollingTimer.Interval = 30000; // Kiểm tra mỗi 30 giây
+            _smartPollingTimer.Tick += SmartPollingTimer_Tick;
+        }
+
+        private async void SmartPollingTimer_Tick(object sender, EventArgs e)
+        {
+            if (!_autoRefresh || _isLoading || string.IsNullOrEmpty(_currentEndpoint))
+                return;
+
+            lock (_pollingLock)
+            {
+                if (_isLoading) return;
+            }
+
+            // Kiểm tra xem có nên polling không dựa trên smart logic
+            if (_client != null && _client.ShouldPoll(_currentEndpoint))
+            {
+                _ = SafeSmartReloadAsync();
+            }
+            else
+            {
+                // Cập nhật status để user biết đang dùng cache
+                var cachedData = _client?.GetCachedDataIfValid(_currentEndpoint);
+                if (cachedData != null)
+                {
+                    CapNhatStatus($"Dùng cache - {cachedData.Count} phim (tiết kiệm request)");
+                }
+            }
+        }
+
+        private async Task SafeSmartReloadAsync()
+        {
+            try
+            {
+                await TaiPhimSmartAsync(false); // false = không force refresh
+            }
+            catch (Exception ex)
+            {
+                CapNhatStatus("Lỗi smart refresh: " + ex.Message);
+                Debug.WriteLine("[SmartRefresh] Exception: " + ex);
+            }
         }
 
         // Tải lần đầu
@@ -72,7 +124,7 @@ namespace xinchaothegioi
         {
             try
             {
-                await TaiPhimAsync();
+                await TaiPhimSmartAsync(true); // true = force refresh lần đầu
             }
             catch (Exception ex)
             {
@@ -80,37 +132,21 @@ namespace xinchaothegioi
             }
         }
 
-        // Event Timer (designer đang gọi timerRefresh_Tick -> chúng ta giữ hàm này làm gateway)
+        // Event Timer cũ (giữ lại để tương thích với Designer)
         private void timerRefresh_Tick(object sender, EventArgs e)
         {
-            if (_autoRefresh)
-            {
-                // Không await trực tiếp trong event sync -> fire & forget có kiểm soát
-                _ = SafeReloadAsync();
-            }
-        }
-
-        private async Task SafeReloadAsync()
-        {
-            try
-            {
-                await TaiPhimAsync();
-            }
-            catch (Exception ex)
-            {
-                CapNhatStatus("Lỗi refresh: " + ex.Message);
-                Debug.WriteLine("[AutoRefresh] Exception: " + ex);
-            }
+            // Chuyển sang smart polling
+            SmartPollingTimer_Tick(sender, e);
         }
 
         // Nút tìm
-        private async void btnSearch_Click(object sender, EventArgs e) => await TaiPhimAsync();
+        private async void btnSearch_Click(object sender, EventArgs e) => await TaiPhimSmartAsync(true);
 
         // Mode đổi
         private async void cboMode_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtQuery.Text))
-                await TaiPhimAsync();
+                await TaiPhimSmartAsync(true);
         }
 
         // Enter trong ô tìm
@@ -119,33 +155,49 @@ namespace xinchaothegioi
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
-                await TaiPhimAsync();
+                await TaiPhimSmartAsync(true);
             }
         }
 
-        // Đổi số giây
+        // Đổi số giây (giữ lại cho tương thích)
         private void nudSeconds_ValueChanged(object sender, EventArgs e)
         {
             if (timerRefresh != null)
                 timerRefresh.Interval = (int)nudSeconds.Value * 1000;
+            
+            // Cập nhật smart polling timer cũng
+            if (_smartPollingTimer != null)
+            {
+                var newInterval = Math.Max((int)nudSeconds.Value * 1000, 30000); // Tối thiểu 30 giây
+                _smartPollingTimer.Interval = newInterval;
+            }
         }
 
-        // Bật / tắt auto refresh
+        // Bật / tắt auto refresh với smart polling
         private void btnAutoRefreshToggle_Click(object sender, EventArgs e)
         {
             _autoRefresh = !_autoRefresh;
             if (_autoRefresh)
             {
+                var interval = Math.Max((int)nudSeconds.Value * 1000, 30000);
+                
+                // Dùng smart polling timer thay vì timer cũ
+                _smartPollingTimer.Interval = interval;
+                _smartPollingTimer.Start();
+                
+                // Vẫn giữ timer cũ cho tương thích
                 timerRefresh.Interval = (int)nudSeconds.Value * 1000;
                 timerRefresh.Start();
-                btnAutoRefreshToggle.Text = "Stop Auto";
-                CapNhatStatus("Auto refresh ON");
+                
+                btnAutoRefreshToggle.Text = "Stop Smart Auto";
+                CapNhatStatus("Smart auto refresh ON - chỉ gọi API khi cần thiết");
             }
             else
             {
+                _smartPollingTimer.Stop();
                 timerRefresh.Stop();
-                btnAutoRefreshToggle.Text = "Start Auto";
-                CapNhatStatus("Auto refresh OFF");
+                btnAutoRefreshToggle.Text = "Start Smart Auto";
+                CapNhatStatus("Smart auto refresh OFF");
             }
         }
 
@@ -172,14 +224,20 @@ namespace xinchaothegioi
         private void frmMovie_FormClosing(object sender, FormClosingEventArgs e)
         {
             HuyDangChay();
+            _smartPollingTimer?.Stop();
+            _smartPollingTimer?.Dispose();
         }
 
-        // --------- Logic tải phim ---------
-        private async Task TaiPhimAsync()
+        // --------- Logic tải phim thông minh ---------
+        private async Task TaiPhimSmartAsync(bool forceRefresh = false)
         {
             if (_client == null) return;
-            if (_isLoading) return; // chống gọi chồng chéo
-            _isLoading = true;
+            
+            lock (_pollingLock)
+            {
+                if (_isLoading) return; // chống gọi chồng chéo
+                _isLoading = true;
+            }
 
             HuyDangChay();
             _cts = new CancellationTokenSource();
@@ -188,22 +246,41 @@ namespace xinchaothegioi
             var query = txtQuery.Text.Trim();
             var mode = cboMode.SelectedItem?.ToString() ?? "Trending Day";
 
-            CapNhatStatus("Đang tải...");
+            // Tạo endpoint identifier
+            _currentEndpoint = !string.IsNullOrEmpty(query) ? $"search:{query}" : $"mode:{mode}";
+
+            var statusPrefix = forceRefresh ? "Đang tải (force)" : "Đang kiểm tra";
+            CapNhatStatus($"{statusPrefix}...");
             btnSearch.Enabled = false;
             flowMovies.Enabled = false;
-
-            ClearMovies();
 
             try
             {
                 List<MovieSummary> list;
                 if (!string.IsNullOrEmpty(query))
-                    list = await _client.SearchAsync(query, token);
+                    list = await _client.SearchSmartAsync(query, token, forceRefresh);
                 else
-                    list = await LayTheoModeAsync(mode, token);
+                    list = await LayTheoModeSmartAsync(mode, token, forceRefresh);
 
-                DoMovies(list);
-                CapNhatStatus($"Đã tải {list.Count} phim");
+                // Chỉ cập nhật UI nếu có data hoặc force refresh
+                if (list?.Count > 0 || forceRefresh)
+                {
+                    ClearMovies();
+                    DoMovies(list);
+                }
+
+                var statusSuffix = forceRefresh ? "" : " (smart cache)";
+                CapNhatStatus($"Đã tải {list?.Count ?? 0} phim{statusSuffix}");
+                
+                // Debug info
+                if (_client != null)
+                {
+                    var stats = _client.GetPollingStats();
+                    if (stats.ContainsKey(_currentEndpoint))
+                    {
+                        Debug.WriteLine($"[SmartPolling] Endpoint: {_currentEndpoint}, Stats: {stats[_currentEndpoint]}");
+                    }
+                }
             }
             catch (OperationCanceledException)
             {
@@ -225,8 +302,31 @@ namespace xinchaothegioi
             {
                 btnSearch.Enabled = true;
                 flowMovies.Enabled = true;
-                _isLoading = false;
+                lock (_pollingLock)
+                {
+                    _isLoading = false;
+                }
             }
+        }
+
+        private Task<List<MovieSummary>> LayTheoModeSmartAsync(string mode, CancellationToken ct, bool forceRefresh = false)
+        {
+            switch (mode)
+            {
+                case "Trending Day": return _client.GetTrendingSmartAsync("day", ct, forceRefresh);
+                case "Trending Week": return _client.GetTrendingSmartAsync("week", ct, forceRefresh);
+                case "Now Playing": return _client.GetCategorySmartAsync("now_playing", ct, forceRefresh);
+                case "Popular": return _client.GetCategorySmartAsync("popular", ct, forceRefresh);
+                case "Top Rated": return _client.GetCategorySmartAsync("top_rated", ct, forceRefresh);
+                case "Upcoming": return _client.GetCategorySmartAsync("upcoming", ct, forceRefresh);
+                default: return _client.GetTrendingSmartAsync("day", ct, forceRefresh);
+            }
+        }
+
+        // Giữ lại phương thức cũ cho backward compatibility
+        private async Task TaiPhimAsync()
+        {
+            await TaiPhimSmartAsync(true);
         }
 
         private Task<List<MovieSummary>> LayTheoModeAsync(string mode, CancellationToken ct)
@@ -245,6 +345,8 @@ namespace xinchaothegioi
 
         private void DoMovies(List<MovieSummary> movies)
         {
+            if (movies == null) return;
+            
             flowMovies.SuspendLayout();
             try
             {
@@ -387,6 +489,23 @@ namespace xinchaothegioi
         private void ShowError(string msg)
         {
             MessageBox.Show(msg, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+
+        // Thêm button để xem thống kê polling (debugging)
+        private void ShowPollingStats()
+        {
+            if (_client == null) return;
+            
+            var stats = _client.GetPollingStats();
+            var message = "Smart Polling Statistics:\n\n";
+            
+            foreach (var kvp in stats)
+            {
+                message += $"Endpoint: {kvp.Key}\n";
+                message += $"Stats: {kvp.Value}\n\n";
+            }
+            
+            MessageBox.Show(message, "Polling Stats", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         // ===== Handlers thêm (Designer tham chiếu) =====

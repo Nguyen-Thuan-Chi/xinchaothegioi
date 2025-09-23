@@ -8,6 +8,7 @@ using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
+using System.Security.Cryptography;
 
 namespace xinchaothegioi
 {
@@ -17,6 +18,12 @@ namespace xinchaothegioi
         private readonly List<SaleRecord> _allRecords = new List<SaleRecord>();
         private readonly CultureInfo _vn = new CultureInfo("vi-VN");
         private bool _initialized;
+        
+        // Smart refresh mechanism
+        private string _lastDataHash = string.Empty;
+        private DateTime _lastRefreshTime = DateTime.MinValue;
+        private readonly TimeSpan _minimumRefreshInterval = TimeSpan.FromSeconds(5); // Tối thiểu 5 giây giữa các lần refresh
+        private System.Windows.Forms.Timer _changeDetectionTimer;
 
         private class SaleRecord
         {
@@ -36,6 +43,7 @@ namespace xinchaothegioi
             InitializeComponent();
             InitForm();
             InitEvents();
+            InitializeSmartRefresh();
         }
 
         public void SetSourceGrid(DataGridView dgv)
@@ -45,9 +53,106 @@ namespace xinchaothegioi
             RefreshAll();
         }
 
+        private void InitializeSmartRefresh()
+        {
+            // Timer để kiểm tra thay đổi dữ liệu nguồn thay vì refresh liên tục
+            _changeDetectionTimer = new System.Windows.Forms.Timer();
+            _changeDetectionTimer.Interval = 2000; // Kiểm tra mỗi 2 giây
+            _changeDetectionTimer.Tick += ChangeDetectionTimer_Tick;
+            _changeDetectionTimer.Start();
+        }
+
+        private void ChangeDetectionTimer_Tick(object sender, EventArgs e)
+        {
+            if (_sourceGrid == null || !_initialized) return;
+
+            // Kiểm tra xem đã đủ thời gian để refresh chưa
+            if (DateTime.Now - _lastRefreshTime < _minimumRefreshInterval) return;
+
+            // Tính hash của dữ liệu hiện tại
+            var currentHash = ComputeDataHash();
+            
+            // Chỉ refresh khi dữ liệu thực sự thay đổi
+            if (currentHash != _lastDataHash)
+            {
+                _lastDataHash = currentHash;
+                _lastRefreshTime = DateTime.Now;
+                
+                // Thực hiện refresh trong background thread để không block UI
+                RefreshDataAsync();
+            }
+        }
+
+        private string ComputeDataHash()
+        {
+            if (_sourceGrid == null) return string.Empty;
+            
+            try
+            {
+                var dataSignature = new StringBuilder();
+                dataSignature.Append($"RowCount:{_sourceGrid.Rows.Count}|");
+                
+                // Lấy mẫu một vài dòng để tạo signature (không cần check tất cả để tối ưu performance)
+                var sampleRows = Math.Min(_sourceGrid.Rows.Count, 10);
+                for (int i = 0; i < sampleRows; i++)
+                {
+                    var row = _sourceGrid.Rows[i];
+                    if (row.IsNewRow) continue;
+                    
+                    for (int j = 0; j < Math.Min(row.Cells.Count, 5); j++) // Chỉ lấy 5 cột đầu
+                    {
+                        dataSignature.Append($"{row.Cells[j].Value}|");
+                    }
+                }
+                
+                // Thêm thông tin filter hiện tại
+                dataSignature.Append($"From:{dateTimePicker1.Value:yyyyMMdd}|");
+                dataSignature.Append($"To:{dateTimePicker2.Value:yyyyMMdd}|");
+                dataSignature.Append($"Region:{comboBox1.SelectedItem}|");
+                
+                using (var sha256 = SHA256.Create())
+                {
+                    var hash = sha256.ComputeHash(Encoding.UTF8.GetBytes(dataSignature.ToString()));
+                    return Convert.ToBase64String(hash);
+                }
+            }
+            catch
+            {
+                return Guid.NewGuid().ToString(); // Fallback để force refresh nếu có lỗi
+            }
+        }
+
+        private async void RefreshDataAsync()
+        {
+            try
+            {
+                // Sử dụng Task.Run để không block UI thread
+                await System.Threading.Tasks.Task.Run(() =>
+                {
+                    if (this.InvokeRequired)
+                    {
+                        this.Invoke(new Action(() =>
+                        {
+                            LoadSourceData();
+                            RefreshAll();
+                        }));
+                    }
+                    else
+                    {
+                        LoadSourceData();
+                        RefreshAll();
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[SmartRefresh] Error: {ex.Message}");
+            }
+        }
+
         private void InitForm()
         {
-            Text = "Báo cáo tổng hợp";
+            Text = "Báo cáo tổng hợp - Smart Refresh";
             StartPosition = FormStartPosition.CenterParent;
             comboBox1.Items.Clear();
             comboBox1.Items.Add("Tất cả");
@@ -65,12 +170,35 @@ namespace xinchaothegioi
 
         private void InitEvents()
         {
-            dateTimePicker1.ValueChanged += (s, e) => { if (_initialized) RefreshAll(); };
-            dateTimePicker2.ValueChanged += (s, e) => { if (_initialized) RefreshAll(); };
-            comboBox1.SelectedIndexChanged += (s, e) => { if (_initialized) RefreshAll(); };
-            button1.Click += (s, e) => RefreshAll();
+            // Sử dụng debounced refresh để tránh refresh quá nhiều khi user thay đổi filter
+            dateTimePicker1.ValueChanged += (s, e) => { if (_initialized) ScheduleDebouncedRefresh(); };
+            dateTimePicker2.ValueChanged += (s, e) => { if (_initialized) ScheduleDebouncedRefresh(); };
+            comboBox1.SelectedIndexChanged += (s, e) => { if (_initialized) ScheduleDebouncedRefresh(); };
+            button1.Click += (s, e) => RefreshAll(); // Manual refresh button
             if (btnExportExcel != null) btnExportExcel.Click += BtnExportExcel_Click;
             if (btnExportPdf != null) btnExportPdf.Click += BtnExportPdf_Click;
+        }
+
+        private System.Windows.Forms.Timer _debounceTimer;
+        private void ScheduleDebouncedRefresh()
+        {
+            // Debounce mechanism: chờ 500ms sau thay đổi cuối cùng mới refresh
+            _debounceTimer?.Stop();
+            _debounceTimer?.Dispose();
+            
+            _debounceTimer = new System.Windows.Forms.Timer();
+            _debounceTimer.Interval = 500;
+            _debounceTimer.Tick += (s, e) =>
+            {
+                _debounceTimer.Stop();
+                _debounceTimer.Dispose();
+                _debounceTimer = null;
+                
+                // Force refresh vì user thay đổi filter
+                _lastDataHash = string.Empty; 
+                RefreshDataAsync();
+            };
+            _debounceTimer.Start();
         }
 
         private void ConfigureCharts()
@@ -155,12 +283,22 @@ namespace xinchaothegioi
 
         private void RefreshAll()
         {
-            var filtered = ApplyFilters().ToList();
-            UpdateSummary(filtered);
-            UpdateGenderChart(filtered);
-            UpdateOccupancyChart(filtered);
-            UpdateCompareCharts(filtered);
-            UpdateTopGrid(filtered);
+            try
+            {
+                var filtered = ApplyFilters().ToList();
+                UpdateSummary(filtered);
+                UpdateGenderChart(filtered);
+                UpdateOccupancyChart(filtered);
+                UpdateCompareCharts(filtered);
+                UpdateTopGrid(filtered);
+                
+                // Cập nhật title để hiển thị thời gian refresh cuối
+                this.Text = $"Báo cáo tổng hợp - Smart Refresh (Cập nhật: {DateTime.Now:HH:mm:ss})";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"[RefreshAll] Error: {ex.Message}");
+            }
         }
 
         private void UpdateSummary(IEnumerable<SaleRecord> data)
@@ -278,6 +416,17 @@ namespace xinchaothegioi
             string name = parts.Length > 0 ? parts[0] : key;
             string phone = parts.Length > 1 ? parts[1] : string.Empty;
             return name + (string.IsNullOrEmpty(phone) ? string.Empty : (" - " + phone)) + " (" + tickets + ")";
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            // Cleanup timers
+            _changeDetectionTimer?.Stop();
+            _changeDetectionTimer?.Dispose();
+            _debounceTimer?.Stop();
+            _debounceTimer?.Dispose();
+            
+            base.OnFormClosed(e);
         }
 
         private void BtnExportExcel_Click(object sender, EventArgs e)
