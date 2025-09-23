@@ -22,6 +22,12 @@ namespace xinchaothegioi
             InitializeDataGridView();
             InitializeRegionComboBox();
             
+            // Đặt ô tổng tiền chỉ đọc để tránh chỉnh sửa thủ công
+            txtTotal.ReadOnly = true;
+            txtTotal.TabStop = false; // bỏ focus tab
+            // Có thể đặt màu nền giống control readonly chuẩn
+            txtTotal.BackColor = SystemColors.ControlLight;
+            
             // Khởi tạo DateTimePicker với ngày hiện tại
             dtpSaleDate.Value = DateTime.Now;
             

@@ -129,9 +129,10 @@
             // 
             // btnSelectMovie
             // 
+            this.btnSelectMovie.AutoSize = true;
             this.btnSelectMovie.Location = new System.Drawing.Point(761, 15);
             this.btnSelectMovie.Name = "btnSelectMovie";
-            this.btnSelectMovie.Size = new System.Drawing.Size(96, 22);
+            this.btnSelectMovie.Size = new System.Drawing.Size(103, 26);
             this.btnSelectMovie.TabIndex = 7;
             this.btnSelectMovie.Text = "Chọn phim";
             this.btnSelectMovie.UseVisualStyleBackColor = true;
@@ -139,9 +140,10 @@
             // 
             // btnCancelMovie
             // 
+            this.btnCancelMovie.AutoSize = true;
             this.btnCancelMovie.Location = new System.Drawing.Point(888, 14);
             this.btnCancelMovie.Name = "btnCancelMovie";
-            this.btnCancelMovie.Size = new System.Drawing.Size(96, 22);
+            this.btnCancelMovie.Size = new System.Drawing.Size(96, 26);
             this.btnCancelMovie.TabIndex = 7;
             this.btnCancelMovie.Text = "Hủy chọn";
             this.btnCancelMovie.UseVisualStyleBackColor = true;

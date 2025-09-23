@@ -63,6 +63,7 @@
             this.button1 = new System.Windows.Forms.Button();
             this.btnSeat1 = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnSelectMovie = new System.Windows.Forms.Button();
             this.dtpSaleDate = new System.Windows.Forms.DateTimePicker();
             this.dgvInformaton = new System.Windows.Forms.DataGridView();
             this.colInvoiceId = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -94,7 +95,6 @@
             this.btnExit = new System.Windows.Forms.Button();
             this.btnEdit = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
-            this.btnSelectMovie = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -126,14 +126,14 @@
             // mnuSystem_Login
             // 
             this.mnuSystem_Login.Name = "mnuSystem_Login";
-            this.mnuSystem_Login.Size = new System.Drawing.Size(224, 26);
+            this.mnuSystem_Login.Size = new System.Drawing.Size(165, 26);
             this.mnuSystem_Login.Text = "Đăng nhập";
             this.mnuSystem_Login.Click += new System.EventHandler(this.đăngNhậpToolStripMenuItem_Click);
             // 
             // mnuSystem_Exit
             // 
             this.mnuSystem_Exit.Name = "mnuSystem_Exit";
-            this.mnuSystem_Exit.Size = new System.Drawing.Size(224, 26);
+            this.mnuSystem_Exit.Size = new System.Drawing.Size(165, 26);
             this.mnuSystem_Exit.Text = "Thoát";
             // 
             // mnuFunctions
@@ -151,20 +151,20 @@
             // mnuFunctions_SellTickets
             // 
             this.mnuFunctions_SellTickets.Name = "mnuFunctions_SellTickets";
-            this.mnuFunctions_SellTickets.Size = new System.Drawing.Size(224, 26);
+            this.mnuFunctions_SellTickets.Size = new System.Drawing.Size(208, 26);
             this.mnuFunctions_SellTickets.Text = "Bán vé";
             // 
             // mnuFunctions_ViewRevenue
             // 
             this.mnuFunctions_ViewRevenue.Name = "mnuFunctions_ViewRevenue";
-            this.mnuFunctions_ViewRevenue.Size = new System.Drawing.Size(224, 26);
+            this.mnuFunctions_ViewRevenue.Size = new System.Drawing.Size(208, 26);
             this.mnuFunctions_ViewRevenue.Text = "xem doanh thu";
             this.mnuFunctions_ViewRevenue.Click += new System.EventHandler(this.mnuViewRevenue_Click);
             // 
             // mnuFunctions_Reports
             // 
             this.mnuFunctions_Reports.Name = "mnuFunctions_Reports";
-            this.mnuFunctions_Reports.Size = new System.Drawing.Size(224, 26);
+            this.mnuFunctions_Reports.Size = new System.Drawing.Size(208, 26);
             this.mnuFunctions_Reports.Text = "báo cáo thống kê";
             this.mnuFunctions_Reports.Click += new System.EventHandler(this.mnuReports_Click);
             // 
@@ -491,6 +491,16 @@
             this.groupBox2.Text = "thông tin khách hàng";
             this.groupBox2.Visible = false;
             // 
+            // btnSelectMovie
+            // 
+            this.btnSelectMovie.Location = new System.Drawing.Point(33, 118);
+            this.btnSelectMovie.Name = "btnSelectMovie";
+            this.btnSelectMovie.Size = new System.Drawing.Size(102, 23);
+            this.btnSelectMovie.TabIndex = 13;
+            this.btnSelectMovie.Text = "Chọn Phim";
+            this.btnSelectMovie.UseVisualStyleBackColor = true;
+            this.btnSelectMovie.Click += new System.EventHandler(this.btnSelectMovie_Click);
+            // 
             // dtpSaleDate
             // 
             this.dtpSaleDate.Location = new System.Drawing.Point(265, 118);
@@ -787,16 +797,6 @@
             this.btnDelete.UseVisualStyleBackColor = true;
             this.btnDelete.Visible = false;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
-            // 
-            // btnSelectMovie
-            // 
-            this.btnSelectMovie.Location = new System.Drawing.Point(33, 118);
-            this.btnSelectMovie.Name = "btnSelectMovie";
-            this.btnSelectMovie.Size = new System.Drawing.Size(102, 23);
-            this.btnSelectMovie.TabIndex = 13;
-            this.btnSelectMovie.Text = "Chọn Phim";
-            this.btnSelectMovie.UseVisualStyleBackColor = true;
-            this.btnSelectMovie.Click += new System.EventHandler(this.btnSelectMovie_Click);
             // 
             // frmMain1
             // 
