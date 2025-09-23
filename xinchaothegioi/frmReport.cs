@@ -353,7 +353,7 @@ namespace xinchaothegioi
                 doc.Open();
                 var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 16f);
                 var fontNormal = FontFactory.GetFont(FontFactory.HELVETICA, 10f);
-                var fontSmall = FontFactory.GetFont(FontFactory.HELVETICA, 8f, Font.ITALIC, BaseColor.DARK_GRAY);
+                var fontSmall = FontFactory.GetFont(FontFactory.HELVETICA, 8f, iTextSharp.text.Font.ITALIC, BaseColor.DARK_GRAY);
                 doc.Add(new Paragraph("BÁO CÁO TỔNG HỢP", fontHeader) { Alignment = Element.ALIGN_CENTER, SpacingAfter = 10f });
                 doc.Add(new Paragraph(string.Format("Khoảng thời gian: {0} - {1}", dateTimePicker1.Value.ToString(AppConstants.DATE_FORMAT), dateTimePicker2.Value.ToString(AppConstants.DATE_FORMAT)), fontNormal));
                 doc.Add(new Paragraph("Khu vực: " + (comboBox1.SelectedItem ?? "Tất cả"), fontNormal));
