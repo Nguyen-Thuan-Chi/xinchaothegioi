@@ -75,12 +75,10 @@
             this.colTotalAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colSaleDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnAddRegion = new System.Windows.Forms.Button();
-            this.cboSelectMovie = new System.Windows.Forms.ComboBox();
             this.cboRegion = new System.Windows.Forms.ComboBox();
             this.lblRegion = new System.Windows.Forms.Label();
             this.txtPhone = new System.Windows.Forms.TextBox();
             this.lblSaleDate = new System.Windows.Forms.Label();
-            this.lblSelectMovie = new System.Windows.Forms.Label();
             this.lblPhone = new System.Windows.Forms.Label();
             this.rdoFemale = new System.Windows.Forms.RadioButton();
             this.rdoMale = new System.Windows.Forms.RadioButton();
@@ -96,6 +94,7 @@
             this.btnExit = new System.Windows.Forms.Button();
             this.btnEdit = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
+            this.btnSelectMovie = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -110,7 +109,7 @@
             this.mnuFunctions});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1099, 28);
+            this.menuStrip1.Size = new System.Drawing.Size(1099, 30);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -120,7 +119,7 @@
             this.mnuSystem_Login,
             this.mnuSystem_Exit});
             this.mnuSystem.Name = "mnuSystem";
-            this.mnuSystem.Size = new System.Drawing.Size(85, 24);
+            this.mnuSystem.Size = new System.Drawing.Size(85, 26);
             this.mnuSystem.Text = "Hệ thống";
             this.mnuSystem.Click += new System.EventHandler(this.mnuSystem_Click);
             // 
@@ -470,15 +469,14 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnSelectMovie);
             this.groupBox2.Controls.Add(this.dtpSaleDate);
             this.groupBox2.Controls.Add(this.dgvInformaton);
             this.groupBox2.Controls.Add(this.btnAddRegion);
-            this.groupBox2.Controls.Add(this.cboSelectMovie);
             this.groupBox2.Controls.Add(this.cboRegion);
             this.groupBox2.Controls.Add(this.lblRegion);
             this.groupBox2.Controls.Add(this.txtPhone);
             this.groupBox2.Controls.Add(this.lblSaleDate);
-            this.groupBox2.Controls.Add(this.lblSelectMovie);
             this.groupBox2.Controls.Add(this.lblPhone);
             this.groupBox2.Controls.Add(this.rdoFemale);
             this.groupBox2.Controls.Add(this.rdoMale);
@@ -495,9 +493,9 @@
             // 
             // dtpSaleDate
             // 
-            this.dtpSaleDate.Location = new System.Drawing.Point(299, 121);
+            this.dtpSaleDate.Location = new System.Drawing.Point(265, 118);
             this.dtpSaleDate.Name = "dtpSaleDate";
-            this.dtpSaleDate.Size = new System.Drawing.Size(200, 22);
+            this.dtpSaleDate.Size = new System.Drawing.Size(244, 22);
             this.dtpSaleDate.TabIndex = 11;
             // 
             // dgvInformaton
@@ -596,16 +594,6 @@
             this.btnAddRegion.Visible = false;
             this.btnAddRegion.Click += new System.EventHandler(this.btnAddRegion_Click);
             // 
-            // cboSelectMovie
-            // 
-            this.cboSelectMovie.FormattingEnabled = true;
-            this.cboSelectMovie.Location = new System.Drawing.Point(82, 117);
-            this.cboSelectMovie.Name = "cboSelectMovie";
-            this.cboSelectMovie.Size = new System.Drawing.Size(121, 24);
-            this.cboSelectMovie.TabIndex = 8;
-            this.cboSelectMovie.Visible = false;
-            this.cboSelectMovie.SelectedIndexChanged += new System.EventHandler(this.cboRegion_SelectedIndexChanged);
-            // 
             // cboRegion
             // 
             this.cboRegion.FormattingEnabled = true;
@@ -636,21 +624,12 @@
             // lblSaleDate
             // 
             this.lblSaleDate.AutoSize = true;
-            this.lblSaleDate.Location = new System.Drawing.Point(209, 125);
+            this.lblSaleDate.Location = new System.Drawing.Point(175, 121);
             this.lblSaleDate.Name = "lblSaleDate";
             this.lblSaleDate.Size = new System.Drawing.Size(84, 16);
             this.lblSaleDate.TabIndex = 5;
             this.lblSaleDate.Text = "Ngày bán vé";
-            // 
-            // lblSelectMovie
-            // 
-            this.lblSelectMovie.AutoSize = true;
-            this.lblSelectMovie.Location = new System.Drawing.Point(6, 121);
-            this.lblSelectMovie.Name = "lblSelectMovie";
-            this.lblSelectMovie.Size = new System.Drawing.Size(70, 16);
-            this.lblSelectMovie.TabIndex = 5;
-            this.lblSelectMovie.Text = "Chọn phim";
-            this.lblSelectMovie.Click += new System.EventHandler(this.lblSelectMovie_Click);
+            this.lblSaleDate.Click += new System.EventHandler(this.lblSaleDate_Click);
             // 
             // lblPhone
             // 
@@ -809,6 +788,16 @@
             this.btnDelete.Visible = false;
             this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
             // 
+            // btnSelectMovie
+            // 
+            this.btnSelectMovie.Location = new System.Drawing.Point(33, 118);
+            this.btnSelectMovie.Name = "btnSelectMovie";
+            this.btnSelectMovie.Size = new System.Drawing.Size(102, 23);
+            this.btnSelectMovie.TabIndex = 13;
+            this.btnSelectMovie.Text = "Chọn Phim";
+            this.btnSelectMovie.UseVisualStyleBackColor = true;
+            this.btnSelectMovie.Click += new System.EventHandler(this.btnSelectMovie_Click);
+            // 
             // frmMain1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
@@ -906,10 +895,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colTicketCount;
         private System.Windows.Forms.DataGridViewTextBoxColumn colTotalAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn colSaleDate;
-        private System.Windows.Forms.Label lblSelectMovie;
-        private System.Windows.Forms.ComboBox cboSelectMovie;
         private System.Windows.Forms.DateTimePicker dtpSaleDate;
         private System.Windows.Forms.Label lblSaleDate;
+        private System.Windows.Forms.Button btnSelectMovie;
     }
 }
 

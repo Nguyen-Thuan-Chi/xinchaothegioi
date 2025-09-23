@@ -11,6 +11,8 @@ namespace xinchaothegioi
         private List<Button> selectedSeats = new List<Button>();
         private List<Button> allSeats = new List<Button>();
         private const int SeatPrice = 80000;
+        private MovieSummary _selectedMovie; // phim hiện tại
+        private ToolTip _movieToolTip = new ToolTip();
 
         public frmMain1()
         {
@@ -37,6 +39,26 @@ namespace xinchaothegioi
             // Thiết lập properties cho form
             this.Text = "Hệ thống bán vé xem phim";
             this.WindowState = FormWindowState.Maximized;
+        }
+
+        private string TruncateTitle(string title, int max = 16)
+        {
+            if (string.IsNullOrEmpty(title)) return "(Không có)";
+            return title.Length > max ? title.Substring(0, max - 3) + "..." : title;
+        }
+
+        private void UpdateSelectedMovieUI()
+        {
+            if (_selectedMovie == null)
+            {
+                btnSelectMovie.Text = "Chọn Phim";
+                _movieToolTip.SetToolTip(btnSelectMovie, "Chọn phim từ TMDB");
+            }
+            else
+            {
+                btnSelectMovie.Text = TruncateTitle(_selectedMovie.title);
+                _movieToolTip.SetToolTip(btnSelectMovie, $"{_selectedMovie.title}\nĐiểm: {_selectedMovie.vote_average}/10\nPhát hành: {_selectedMovie.release_date}");
+            }
         }
 
         private void ClearSelectedSeats()
@@ -180,7 +202,6 @@ namespace xinchaothegioi
 
         private void btnSelect_Click(object sender, EventArgs e)
         {
-            // Validate required fields
             string name = txtName.Text.Trim();
             string phone = txtPhone.Text.Trim();
             string region = cboRegion.SelectedItem?.ToString() ?? "";
@@ -194,69 +215,35 @@ namespace xinchaothegioi
                 }
             }
 
-            // Check for missing info
-            if (string.IsNullOrEmpty(name))
-            {
-                MessageBox.Show("Vui lòng nhập tên khách hàng.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtName.Focus();
-                return;
-            }
-            if (string.IsNullOrEmpty(phone))
-            {
-                MessageBox.Show("Vui lòng nhập số điện thoại.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtPhone.Focus();
-                return;
-            }
-            if (string.IsNullOrEmpty(region))
-            {
-                MessageBox.Show("Vui lòng chọn khu vực.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                cboRegion.Focus();
-                return;
-            }
-            if (string.IsNullOrEmpty(gender))
-            {
-                MessageBox.Show("Vui lòng chọn giới tính.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (seatNames.Count == 0)
-            {
-                MessageBox.Show("Vui lòng chọn ghế ngồi!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            if (string.IsNullOrEmpty(name)) { MessageBox.Show("Vui lòng nhập tên khách hàng.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); txtName.Focus(); return; }
+            if (string.IsNullOrEmpty(phone)) { MessageBox.Show("Vui lòng nhập số điện thoại.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); txtPhone.Focus(); return; }
+            if (string.IsNullOrEmpty(region)) { MessageBox.Show("Vui lòng chọn khu vực.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); cboRegion.Focus(); return; }
+            if (string.IsNullOrEmpty(gender)) { MessageBox.Show("Vui lòng chọn giới tính.", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (seatNames.Count == 0) { MessageBox.Show("Vui lòng chọn ghế ngồi!", "Thiếu thông tin", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (_selectedMovie == null) { MessageBox.Show("Vui lòng chọn phim trước khi bán vé.", "Thiếu phim", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
+            if (!IsValidPhoneNumber(phone)) { MessageBox.Show("Số điện thoại không hợp lệ!", "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning); txtPhone.Focus(); return; }
 
-            // Validation số điện thoại
-            if (!IsValidPhoneNumber(phone))
-            {
-                MessageBox.Show("Số điện thoại không hợp lệ! Vui lòng nhập số điện thoại 10-11 chữ số.", 
-                    "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtPhone.Focus();
-                return;
-            }
-
-            // Tính toán dữ liệu
             string seatList = string.Join(", ", seatNames.OrderBy(s => int.Parse(s)));
             int ticketCount = CountTickets(seatList);
             int totalAmount = CalculateTotalAmount(seatList);
             string saleDate = dtpSaleDate.Value.ToString("dd/MM/yyyy");
+            string movieTitle = _selectedMovie?.title ?? "";
 
-            // Add to DataGridView
             dgvInformaton.Rows.Add(
-                GenerateInvoiceId(), // Mã hóa đơn
-                name,                      // Tên khách hàng
-                gender,                    // Giới tính
-                phone,                     // SĐT
-                region,                    // Khu vực
-                seatList,                  // Ghế ngồi
-                ticketCount.ToString(),    // Số lượng vé
-                totalAmount.ToString("N0") + " VND", // Thành tiền
-                saleDate                   // Ngày bán vé
+                GenerateInvoiceId(),
+                name,
+                gender,
+                phone,
+                region,
+                movieTitle,
+                seatList,
+                ticketCount.ToString(),
+                totalAmount.ToString("N0") + " VND",
+                saleDate
             );
 
-            // Show success message
-            MessageBox.Show($"Đặt vé thành công!\nKhách hàng: {name}\nGhế: {seatList}\nTổng tiền: {totalAmount:N0} VND", 
-                "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show($"Đặt vé thành công!\nPhim: {movieTitle}\nKhách hàng: {name}\nGhế: {seatList}\nTổng tiền: {totalAmount:N0} VND", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            // Reset form
             ClearForm();
             UpdateSeatStatus();
         }
@@ -396,12 +383,12 @@ namespace xinchaothegioi
             dgvInformaton.Columns.Add("colGender", "Giới tính");
             dgvInformaton.Columns.Add("colPhone", "SĐT");
             dgvInformaton.Columns.Add("colRegion", "Khu vực");
+            dgvInformaton.Columns.Add("colMovieTitle", "Phim"); // thêm cột phim
             dgvInformaton.Columns.Add("colSeat", "Ghế ngồi");
             dgvInformaton.Columns.Add("colTicketCount", "Số lượng vé");
             dgvInformaton.Columns.Add("colTotalAmount", "Thành tiền");
             dgvInformaton.Columns.Add("colSaleDate", "Ngày bán vé");
 
-            // Thiết lập properties cho DataGridView
             dgvInformaton.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvInformaton.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvInformaton.MultiSelect = false;
@@ -712,6 +699,30 @@ namespace xinchaothegioi
             catch (Exception ex)
             {
                 MessageBox.Show("Không thể mở báo cáo: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void lblSaleDate_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void lvSelectMovie_DoubleClick(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnSelectMovie_Click(object sender, EventArgs e)
+        {
+            using (var movieForm = new frmMovie())
+            {
+                var result = movieForm.ShowDialog(this);
+                if (result == DialogResult.OK && movieForm.SelectedMovie != null)
+                {
+                    _selectedMovie = movieForm.SelectedMovie;
+                    UpdateSelectedMovieUI();
+                    MessageBox.Show($"Đã chọn phim: {_selectedMovie.title}", "Phim", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
             }
         }
     }
