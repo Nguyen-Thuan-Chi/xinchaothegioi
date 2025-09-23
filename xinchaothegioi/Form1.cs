@@ -323,8 +323,18 @@ namespace xinchaothegioi
 
         private void đăngNhậpToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            // (Login form tạm thời bị vô hiệu hóa) -> mở trực tiếp chức năng
-            SetControlsVisible(true);
+            using (var login = new frmLogin())
+            {
+                if (login.ShowDialog() == DialogResult.OK)
+                {
+                    SetControlsVisible(true);
+                }
+                else
+                {
+                    SetControlsVisible(false);
+                    MessageBox.Show("Đăng nhập thất bại!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
         }
 
         private void HideAllExceptMenu()
@@ -676,6 +686,33 @@ namespace xinchaothegioi
         public DataGridView GetRevenueDataGridView()
         {
             return dgvInformaton;
+        }
+
+        private void txtTotal_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void mnuReports_Click(object sender, EventArgs e)
+        {
+            // Mở form báo cáo tổng hợp (frmReport)
+            if (dgvInformaton.Rows.Count == 0 || (dgvInformaton.Rows.Count == 1 && dgvInformaton.AllowUserToAddRows))
+            {
+                MessageBox.Show("Chưa có dữ liệu vé để xem báo cáo!\nVui lòng bán vé trước.", "Không có dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            try
+            {
+                using (var rpt = new frmReport())
+                {
+                    rpt.SetSourceGrid(dgvInformaton);
+                    rpt.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể mở báo cáo: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

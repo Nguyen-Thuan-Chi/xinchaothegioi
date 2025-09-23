@@ -120,21 +120,21 @@
             this.mnuSystem_Login,
             this.mnuSystem_Exit});
             this.mnuSystem.Name = "mnuSystem";
-            this.mnuSystem.Size = new System.Drawing.Size(85, 26);
+            this.mnuSystem.Size = new System.Drawing.Size(85, 24);
             this.mnuSystem.Text = "Hệ thống";
             this.mnuSystem.Click += new System.EventHandler(this.mnuSystem_Click);
             // 
             // mnuSystem_Login
             // 
             this.mnuSystem_Login.Name = "mnuSystem_Login";
-            this.mnuSystem_Login.Size = new System.Drawing.Size(165, 26);
+            this.mnuSystem_Login.Size = new System.Drawing.Size(224, 26);
             this.mnuSystem_Login.Text = "Đăng nhập";
             this.mnuSystem_Login.Click += new System.EventHandler(this.đăngNhậpToolStripMenuItem_Click);
             // 
             // mnuSystem_Exit
             // 
             this.mnuSystem_Exit.Name = "mnuSystem_Exit";
-            this.mnuSystem_Exit.Size = new System.Drawing.Size(165, 26);
+            this.mnuSystem_Exit.Size = new System.Drawing.Size(224, 26);
             this.mnuSystem_Exit.Text = "Thoát";
             // 
             // mnuFunctions
@@ -152,21 +152,22 @@
             // mnuFunctions_SellTickets
             // 
             this.mnuFunctions_SellTickets.Name = "mnuFunctions_SellTickets";
-            this.mnuFunctions_SellTickets.Size = new System.Drawing.Size(208, 26);
+            this.mnuFunctions_SellTickets.Size = new System.Drawing.Size(224, 26);
             this.mnuFunctions_SellTickets.Text = "Bán vé";
             // 
             // mnuFunctions_ViewRevenue
             // 
             this.mnuFunctions_ViewRevenue.Name = "mnuFunctions_ViewRevenue";
-            this.mnuFunctions_ViewRevenue.Size = new System.Drawing.Size(208, 26);
+            this.mnuFunctions_ViewRevenue.Size = new System.Drawing.Size(224, 26);
             this.mnuFunctions_ViewRevenue.Text = "xem doanh thu";
             this.mnuFunctions_ViewRevenue.Click += new System.EventHandler(this.mnuViewRevenue_Click);
             // 
             // mnuFunctions_Reports
             // 
             this.mnuFunctions_Reports.Name = "mnuFunctions_Reports";
-            this.mnuFunctions_Reports.Size = new System.Drawing.Size(208, 26);
+            this.mnuFunctions_Reports.Size = new System.Drawing.Size(224, 26);
             this.mnuFunctions_Reports.Text = "báo cáo thống kê";
+            this.mnuFunctions_Reports.Click += new System.EventHandler(this.mnuReports_Click);
             // 
             // groupBox1
             // 
@@ -751,6 +752,7 @@
             this.txtTotal.Size = new System.Drawing.Size(131, 22);
             this.txtTotal.TabIndex = 11;
             this.txtTotal.Visible = false;
+            this.txtTotal.TextChanged += new System.EventHandler(this.txtTotal_TextChanged);
             // 
             // btnSelect
             // 
