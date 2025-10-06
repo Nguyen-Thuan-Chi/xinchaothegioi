@@ -4,12 +4,12 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using System.Drawing;
 
-namespace xinchaothegioi
+namespace xinchaothegioi.Utilities
 {
     /// <summary>
     /// L?p ti?n ?ch ch?a c?c ph??ng th?c h? tr?
     /// </summary>
-    public static class Utils
+    public static class AppUtils
     {
         /// <summary>
         /// Ki?m tra s? ?i?n tho?i c? h?p l? kh?ng

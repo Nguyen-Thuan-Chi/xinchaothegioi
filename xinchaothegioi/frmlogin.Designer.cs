@@ -33,6 +33,7 @@
             this.txtUsername = new System.Windows.Forms.TextBox();
             this.txtPassword = new System.Windows.Forms.TextBox();
             this.btnLogin = new System.Windows.Forms.Button();
+            this.lblSignupAccount = new System.Windows.Forms.LinkLabel();
             this.SuspendLayout();
             // 
             // lblName
@@ -49,7 +50,7 @@
             this.lblPassword.AutoSize = true;
             this.lblPassword.Location = new System.Drawing.Point(27, 82);
             this.lblPassword.Name = "lblPassword";
-            this.lblPassword.Size = new System.Drawing.Size(100, 16);
+            this.lblPassword.Size = new System.Drawing.Size(101, 16);
             this.lblPassword.TabIndex = 1;
             this.lblPassword.Text = "Enter Password";
             // 
@@ -79,12 +80,25 @@
             this.btnLogin.Click += new System.EventHandler(this.btnLogin_Click);
             this.btnLogin.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.btnLogin_KeyPress);
             // 
+            // lblSignupAccount
+            // 
+            this.lblSignupAccount.AutoSize = true;
+            this.lblSignupAccount.Location = new System.Drawing.Point(202, 213);
+            this.lblSignupAccount.Name = "lblSignupAccount";
+            this.lblSignupAccount.Size = new System.Drawing.Size(103, 16);
+            this.lblSignupAccount.TabIndex = 5;
+            this.lblSignupAccount.TabStop = true;
+            this.lblSignupAccount.Text = "Sign up Account";
+            this.lblSignupAccount.UseMnemonic = false;
+            this.lblSignupAccount.LinkClicked += new System.Windows.Forms.LinkLabelLinkClickedEventHandler(this.linkLabel1_LinkClicked);
+            // 
             // frmLogin
             // 
             this.AcceptButton = this.btnLogin;
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(367, 263);
+            this.Controls.Add(this.lblSignupAccount);
             this.Controls.Add(this.btnLogin);
             this.Controls.Add(this.txtPassword);
             this.Controls.Add(this.txtUsername);
@@ -105,5 +119,6 @@
         private System.Windows.Forms.TextBox txtUsername;
         private System.Windows.Forms.TextBox txtPassword;
         private System.Windows.Forms.Button btnLogin;
+        private System.Windows.Forms.LinkLabel lblSignupAccount;
     }
 }

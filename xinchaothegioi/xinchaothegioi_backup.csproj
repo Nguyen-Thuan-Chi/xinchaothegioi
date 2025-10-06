@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="..\packages\EntityFramework.6.5.1\build\EntityFramework.props" Condition="Exists('..\packages\EntityFramework.6.5.1\build\EntityFramework.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
@@ -285,11 +285,6 @@
     <Compile Include="Helpers\SqlServerHelper.cs" />
     <Compile Include="Helpers\SupabaseConfig.cs" />
     <Compile Include="Helpers\SupabaseConfigHelper.cs" />
-    <Compile Include="Migrations\202510060641125_InitialCreate.cs" />
-    <Compile Include="Migrations\202510060641125_InitialCreate.Designer.cs">
-      <DependentUpon>202510060641125_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="MovieApiClient.cs" />
     <Compile Include="Program.cs" />
@@ -325,9 +320,6 @@
     <EmbeddedResource Include="frmReport.resx">
       <DependentUpon>frmReport.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\202510060641125_InitialCreate.resx">
-      <DependentUpon>202510060641125_InitialCreate.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -340,8 +332,6 @@
     <EmbeddedResource Include="ViewRevenue.resx">
       <DependentUpon>ViewRevenue.cs</DependentUpon>
     </EmbeddedResource>
-    <None Include="EnableMigrations.ps1" />
-    <None Include="MIGRATION_SETUP_GUIDE.md" />
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -355,7 +345,6 @@
     <None Include="README.md" />
     <None Include="SEAT_LAYOUT.md" />
     <None Include="SMART_POLLING_GUIDE.md" />
-    <None Include="xinchaothegioi_corrected.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
