@@ -121,5 +121,10 @@ namespace xinchaothegioi
             frmRegister registerForm = new frmRegister();
             registerForm.ShowDialog();
         }
+
+        private void txtPassword_TextChanged(object sender, EventArgs e)
+        {
+
+        }
     }
 }

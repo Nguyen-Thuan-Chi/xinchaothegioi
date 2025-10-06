@@ -239,19 +239,37 @@ namespace xinchaothegioi
                 if (row.IsNewRow) continue;
                 try
                 {
-                    string invoiceId = Convert.ToString(row.Cells["colInvoiceId"].Value);
-                    string name = Convert.ToString(row.Cells["colCustomerName"].Value);
-                    string gender = Convert.ToString(row.Cells["colGender"].Value);
-                    string phone = Convert.ToString(row.Cells["colPhone"].Value);
-                    string region = Convert.ToString(row.Cells["colRegion"].Value);
-                    string seats = Convert.ToString(row.Cells["colSeat"].Value);
-                    string ticketStr = Convert.ToString(row.Cells["colTicketCount"].Value);
-                    string amountStr = Convert.ToString(row.Cells["colTotalAmount"].Value);
-                    string dateStr = Convert.ToString(row.Cells["colSaleDate"].Value);
+                    string invoiceId = SafeStr(row.Cells["colInvoiceId"].Value);
+                    string name = SafeStr(row.Cells["colCustomerName"].Value);
+                    string gender = SafeStr(row.Cells["colGender"].Value);
+                    string phone = SafeStr(row.Cells["colPhone"].Value);
+                    string region = SafeStr(row.Cells["colRegion"].Value);
+                    string seats = SafeStr(row.Cells["colSeat"].Value);
 
-                    int ticketCount; int.TryParse(ticketStr, out ticketCount);
-                    decimal amount = ParseAmount(amountStr);
-                    DateTime saleDate; DateTime.TryParseExact(dateStr, AppConstants.DATE_FORMAT, _vn, System.Globalization.DateTimeStyles.None, out saleDate);
+                    // Ticket count
+                    int ticketCount = 0;
+                    var tcObj = row.Cells["colTicketCount"].Value;
+                    if (tcObj is int) ticketCount = (int)tcObj; else int.TryParse(SafeStr(tcObj), out ticketCount);
+
+                    // Amount
+                    decimal amount = 0m;
+                    var amtObj = row.Cells["colTotalAmount"].Value;
+                    if (amtObj is decimal) amount = (decimal)amtObj;
+                    else if (amtObj is double) amount = Convert.ToDecimal((double)amtObj);
+                    else amount = ParseAmount(SafeStr(amtObj));
+
+                    // Date
+                    DateTime saleDate = DateTime.MinValue;
+                    var dateObj = row.Cells["colSaleDate"].Value;
+                    if (dateObj is DateTime dt) saleDate = dt.Date;
+                    else
+                    {
+                        var s = SafeStr(dateObj);
+                        if (!DateTime.TryParseExact(s, AppConstants.DATE_FORMAT, _vn, DateTimeStyles.None, out saleDate))
+                            DateTime.TryParse(s, _vn, DateTimeStyles.None, out saleDate);
+                        saleDate = saleDate.Date;
+                    }
+
                     if (saleDate == DateTime.MinValue) continue;
                     _allRecords.Add(new SaleRecord { InvoiceId = invoiceId, CustomerName = name, Gender = gender, Phone = phone, Region = region, Seats = seats, TicketCount = ticketCount, Amount = amount, SaleDate = saleDate });
                 }
@@ -259,14 +277,20 @@ namespace xinchaothegioi
             }
         }
 
+        private string SafeStr(object v) => v == null ? string.Empty : Convert.ToString(v, _vn);
+
         private decimal ParseAmount(string amountStr)
         {
             if (string.IsNullOrWhiteSpace(amountStr)) return 0m;
-            amountStr = amountStr.Replace("VND", string.Empty).Trim();
-            decimal val;
-            if (decimal.TryParse(amountStr, System.Globalization.NumberStyles.Any, _vn, out val)) return val;
-            amountStr = amountStr.Replace(",", "");
-            decimal.TryParse(amountStr, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out val);
+            var s = amountStr.Replace("VND", string.Empty).Trim();
+            // Try VN culture with thousands separator and space
+            if (decimal.TryParse(s, NumberStyles.Any, _vn, out var valVN)) return valVN;
+            // Strip non-digits then parse invariant
+            var digits = new string(s.Where(char.IsDigit).ToArray());
+            if (decimal.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var valInvariant)) return valInvariant;
+            // Fallback remove commas
+            s = s.Replace(",", "").Replace(".", "");
+            decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var val);
             return val;
         }
 
@@ -306,9 +330,9 @@ namespace xinchaothegioi
             int totalTickets = data.Sum(r => r.TicketCount);
             decimal totalRevenue = data.Sum(r => r.Amount);
             int totalCustomers = data.Select(r => r.CustomerName + r.Phone).Distinct().Count();
-            lblTotalTickets.Text = "Tổng số vé: " + totalTickets.ToString("N0", _vn);
-            lblTotalRevenue.Text = "Tổng doanh thu: " + totalRevenue.ToString("N0", _vn) + " VND";
-            lblTotalCustomers.Text = "Tổng số khách hàng: " + totalCustomers.ToString("N0", _vn);
+            lblTotalTickets.Text = "Tổng số vé: " + totalTickets.ToString("N3", _vn);
+            lblTotalRevenue.Text = "Tổng doanh thu: " + totalRevenue.ToString("N3", _vn) + " VND";
+            lblTotalCustomers.Text = "Tổng số khách hàng: " + totalCustomers.ToString("N3", _vn);
         }
 
         private void UpdateGenderChart(IEnumerable<SaleRecord> data)
@@ -346,8 +370,8 @@ namespace xinchaothegioi
                 p.Color = System.Drawing.Color.LightGray;
                 return;
             }
-            var s1 = series.Points.Add(sold); s1.LegendText = "Đã bán"; s1.Label = sold.ToString("N0", _vn); s1.Color = System.Drawing.Color.SteelBlue;
-            var s2 = series.Points.Add(remaining); s2.LegendText = "Còn lại"; s2.Label = remaining.ToString("N0", _vn); s2.Color = System.Drawing.Color.LightGray;
+            var s1 = series.Points.Add(sold); s1.LegendText = "Đã bán"; s1.Label = sold.ToString("N3", _vn); s1.Color = System.Drawing.Color.SteelBlue;
+            var s2 = series.Points.Add(remaining); s2.LegendText = "Còn lại"; s2.Label = remaining.ToString("N3", _vn); s2.Color = System.Drawing.Color.LightGray;
         }
 
         private void UpdateCompareCharts(IEnumerable<SaleRecord> data)
@@ -368,7 +392,7 @@ namespace xinchaothegioi
                 {
                     var p = regSeries.Points.Add(item.Tickets);
                     p.AxisLabel = item.Region;
-                    p.Label = item.Tickets.ToString("N0", _vn);
+                    p.Label = item.Tickets.ToString("N3", _vn);
                 }
             }
 
@@ -388,7 +412,7 @@ namespace xinchaothegioi
                 {
                     var p = daySeries.Points.Add(item.Tickets);
                     p.AxisLabel = item.Day.ToString(AppConstants.DATE_FORMAT);
-                    p.Label = item.Tickets.ToString("N0", _vn);
+                    p.Label = item.Tickets.ToString("N3", _vn);
                 }
             }
         }
@@ -506,7 +530,7 @@ namespace xinchaothegioi
                 doc.Add(new Paragraph("BÁO CÁO TỔNG HỢP", fontHeader) { Alignment = Element.ALIGN_CENTER, SpacingAfter = 10f });
                 doc.Add(new Paragraph(string.Format("Khoảng thời gian: {0} - {1}", dateTimePicker1.Value.ToString(AppConstants.DATE_FORMAT), dateTimePicker2.Value.ToString(AppConstants.DATE_FORMAT)), fontNormal));
                 doc.Add(new Paragraph("Khu vực: " + (comboBox1.SelectedItem ?? "Tất cả"), fontNormal));
-                doc.Add(new Paragraph(string.Format("Tổng vé: {0:N0}    Tổng doanh thu: {1:N0} VND", data.Sum(x => x.TicketCount), data.Sum(x => x.Amount)), fontNormal) { SpacingAfter = 10f });
+                doc.Add(new Paragraph(string.Format("Tổng vé: {0:N3}    Tổng doanh thu: {1:N0} VND", data.Sum(x => x.TicketCount), data.Sum(x => x.Amount)), fontNormal) { SpacingAfter = 10f });
                 PdfPTable table = new PdfPTable(8) { WidthPercentage = 100f, SpacingBefore = 5f, SpacingAfter = 10f };
                 table.SetWidths(new float[] { 10, 18, 8, 12, 12, 15, 8, 12 });
                 AddHeaderCell(table, "Mã"); AddHeaderCell(table, "Khách hàng"); AddHeaderCell(table, "GT"); AddHeaderCell(table, "SĐT"); AddHeaderCell(table, "Khu vực"); AddHeaderCell(table, "Ghế"); AddHeaderCell(table, "Vé"); AddHeaderCell(table, "Tiền (VND)");
@@ -515,7 +539,7 @@ namespace xinchaothegioi
                 {
                     AddBodyCell(table, r.InvoiceId, fontSmall); AddBodyCell(table, r.CustomerName, fontSmall); AddBodyCell(table, r.Gender, fontSmall);
                     AddBodyCell(table, r.Phone, fontSmall); AddBodyCell(table, r.Region, fontSmall); AddBodyCell(table, r.Seats, fontSmall);
-                    AddBodyCell(table, r.TicketCount.ToString(), fontSmall, Element.ALIGN_RIGHT); AddBodyCell(table, r.Amount.ToString("N0", _vn), fontSmall, Element.ALIGN_RIGHT);
+                    AddBodyCell(table, r.TicketCount.ToString(), fontSmall, Element.ALIGN_RIGHT); AddBodyCell(table, r.Amount.ToString("N3", _vn), fontSmall, Element.ALIGN_RIGHT);
                 }
                 if (data.Count > maxRows)
                 { var more = new PdfPCell(new Phrase($"... còn {data.Count - maxRows} dòng", fontSmall)) { Colspan = 8, HorizontalAlignment = Element.ALIGN_CENTER, BackgroundColor = new BaseColor(240, 240, 240) }; table.AddCell(more); }

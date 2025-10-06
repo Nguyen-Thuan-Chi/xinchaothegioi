@@ -23,7 +23,9 @@ namespace xinchaothegioi
         // Smart polling variables
         private System.Windows.Forms.Timer _smartPollingTimer;
         private readonly object _pollingLock = new object();
-        private string _currentEndpoint;
+        private string _currentEndpoint; // built by MovieApiClient.BuildEndpointKey
+        private string _currentRelativePath; // e.g. "trending/movie/day" or "search/movie"
+        private Dictionary<string, string> _currentQuery; // e.g. { query = ... }
 
         public MovieSummary SelectedMovie { get; private set; }
 
@@ -91,14 +93,14 @@ namespace xinchaothegioi
             }
 
             // Kiểm tra xem có nên polling không dựa trên smart logic
-            if (_client != null && _client.ShouldPoll(_currentEndpoint))
+            if (_client != null && _client.ShouldPoll(_currentRelativePath, _currentQuery))
             {
                 _ = SafeSmartReloadAsync();
             }
             else
             {
                 // Cập nhật status để user biết đang dùng cache
-                var cachedData = _client?.GetCachedDataIfValid(_currentEndpoint);
+                var cachedData = _client?.GetCachedDataIfValid(_currentRelativePath, _currentQuery);
                 if (cachedData != null)
                 {
                     CapNhatStatus($"Dùng cache - {cachedData.Count} phim (tiết kiệm request)");
@@ -243,11 +245,29 @@ namespace xinchaothegioi
             _cts = new CancellationTokenSource();
             var token = _cts.Token;
 
-            var query = txtQuery.Text.Trim();
+            var queryText = txtQuery.Text.Trim();
             var mode = cboMode.SelectedItem?.ToString() ?? "Trending Day";
 
-            // Tạo endpoint identifier
-            _currentEndpoint = !string.IsNullOrEmpty(query) ? $"search:{query}" : $"mode:{mode}";
+            // Xác định relativePath & query đúng theo client
+            if (!string.IsNullOrEmpty(queryText))
+            {
+                _currentRelativePath = "search/movie";
+                _currentQuery = new Dictionary<string, string> { { "query", queryText } };
+            }
+            else
+            {
+                switch (mode)
+                {
+                    case "Trending Day": _currentRelativePath = "trending/movie/day"; _currentQuery = null; break;
+                    case "Trending Week": _currentRelativePath = "trending/movie/week"; _currentQuery = null; break;
+                    case "Now Playing": _currentRelativePath = "movie/now_playing"; _currentQuery = null; break;
+                    case "Popular": _currentRelativePath = "movie/popular"; _currentQuery = null; break;
+                    case "Top Rated": _currentRelativePath = "movie/top_rated"; _currentQuery = null; break;
+                    case "Upcoming": _currentRelativePath = "movie/upcoming"; _currentQuery = null; break;
+                    default: _currentRelativePath = "trending/movie/day"; _currentQuery = null; break;
+                }
+            }
+            _currentEndpoint = _client.BuildEndpointKey(_currentRelativePath, _currentQuery);
 
             var statusPrefix = forceRefresh ? "Đang tải (force)" : "Đang kiểm tra";
             CapNhatStatus($"{statusPrefix}...");
@@ -257,10 +277,22 @@ namespace xinchaothegioi
             try
             {
                 List<MovieSummary> list;
-                if (!string.IsNullOrEmpty(query))
-                    list = await _client.SearchSmartAsync(query, token, forceRefresh);
+                if (!string.IsNullOrEmpty(queryText))
+                    list = await _client.SearchSmartAsync(queryText, token, forceRefresh);
                 else
-                    list = await LayTheoModeSmartAsync(mode, token, forceRefresh);
+                {
+                    // map mode
+                    switch (mode)
+                    {
+                        case "Trending Day": list = await _client.GetTrendingSmartAsync("day", token, forceRefresh); break;
+                        case "Trending Week": list = await _client.GetTrendingSmartAsync("week", token, forceRefresh); break;
+                        case "Now Playing": list = await _client.GetCategorySmartAsync("now_playing", token, forceRefresh); break;
+                        case "Popular": list = await _client.GetCategorySmartAsync("popular", token, forceRefresh); break;
+                        case "Top Rated": list = await _client.GetCategorySmartAsync("top_rated", token, forceRefresh); break;
+                        case "Upcoming": list = await _client.GetCategorySmartAsync("upcoming", token, forceRefresh); break;
+                        default: list = await _client.GetTrendingSmartAsync("day", token, forceRefresh); break;
+                    }
+                }
 
                 // Chỉ cập nhật UI nếu có data hoặc force refresh
                 if (list?.Count > 0 || forceRefresh)

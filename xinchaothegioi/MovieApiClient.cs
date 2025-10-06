@@ -85,6 +85,12 @@ namespace xinchaothegioi
                 throw new InvalidOperationException("TMDB API key not found. Set environment variable TMDB_API_KEY or appSettings key.");
         }
 
+        // Helper build endpoint key consistent for tracking
+        public string BuildEndpointKey(string relativePath, IDictionary<string, string> query)
+        {
+            return $"{relativePath}:{JsonConvert.SerializeObject(query ?? new Dictionary<string, string>())}";
+        }
+
         // Tính hash của dữ liệu để phát hiện thay đổi
         private string ComputeContentHash(List<MovieSummary> movies)
         {
@@ -124,6 +130,12 @@ namespace xinchaothegioi
             return DateTime.Now - tracker.LastChecked >= requiredInterval;
         }
 
+        // Overload: ShouldPoll bằng path + query
+        public bool ShouldPoll(string relativePath, IDictionary<string, string> query)
+        {
+            return ShouldPoll(BuildEndpointKey(relativePath, query));
+        }
+
         // Lấy data từ cache nếu vẫn còn valid
         public List<MovieSummary> GetCachedDataIfValid(string endpoint)
         {
@@ -137,10 +149,16 @@ namespace xinchaothegioi
             return null;
         }
 
+        // Overload: Get cache bằng path + query
+        public List<MovieSummary> GetCachedDataIfValid(string relativePath, IDictionary<string, string> query)
+        {
+            return GetCachedDataIfValid(BuildEndpointKey(relativePath, query));
+        }
+
         // Phiên bản thông minh của GetMoviesAsync với change detection
         public async Task<List<MovieSummary>> GetMoviesSmartAsync(string relativePath, IDictionary<string, string> query, CancellationToken ct, bool forceRefresh = false)
         {
-            var endpoint = $"{relativePath}:{JsonConvert.SerializeObject(query ?? new Dictionary<string, string>())}";
+            var endpoint = BuildEndpointKey(relativePath, query);
             
             // Kiểm tra cache trước nếu không bắt buộc refresh
             if (!forceRefresh)

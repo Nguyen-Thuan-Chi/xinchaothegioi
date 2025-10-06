@@ -185,35 +185,52 @@ namespace xinchaothegioi
             rec = null;
             try
             {
-                string invoiceId = Cell(row, "colInvoiceId");
-                string name = Cell(row, "colCustomerName");
-                string gender = Cell(row, "colGender");
-                string phone = Cell(row, "colPhone");
-                string region = Cell(row, "colRegion");
-                string seats = Cell(row, "colSeat");
-                string ticketStr = Cell(row, "colTicketCount");
-                string amountStr = Cell(row, "colTotalAmount");
-                string dateStr = Cell(row, "colSaleDate");
+                string invoiceId = AsString(row.Cells["colInvoiceId"].Value);
+                string name = AsString(row.Cells["colCustomerName"].Value);
+                string gender = AsString(row.Cells["colGender"].Value);
+                string phone = AsString(row.Cells["colPhone"].Value);
+                string region = AsString(row.Cells["colRegion"].Value);
+                string seats = AsString(row.Cells["colSeat"].Value);
 
-                // Parse date (exact format used when saving)
-                if (!DateTime.TryParseExact(dateStr, _dateFormat, _vn, DateTimeStyles.None, out DateTime saleDate))
+                // Ticket count can be int or string
+                int ticketCount = 0;
+                var tcObj = row.Cells["colTicketCount"].Value;
+                if (tcObj is int) ticketCount = (int)tcObj;
+                else int.TryParse(AsString(tcObj), out ticketCount);
+
+                // Amount can be decimal/double or a string with VND
+                decimal amount = 0m;
+                var amtObj = row.Cells["colTotalAmount"].Value;
+                if (amtObj is decimal) amount = (decimal)amtObj;
+                else if (amtObj is double) amount = Convert.ToDecimal((double)amtObj);
+                else
                 {
-                    // fallback general parse
-                    if (!DateTime.TryParse(dateStr, _vn, DateTimeStyles.None, out saleDate))
-                        return false;
+                    string amountStr = AsString(amtObj);
+                    string digits = Regex.Replace(amountStr, "[^0-9]", "");
+                    if (!string.IsNullOrEmpty(digits)) decimal.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out amount);
                 }
 
-                if (!int.TryParse(ticketStr, out int ticketCount)) return false;
-
-                // Clean amount: keep digits only
-                string digits = Regex.Replace(amountStr ?? string.Empty, "[^0-9]", "");
-                if (string.IsNullOrEmpty(digits)) return false;
-                if (!decimal.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out decimal amount))
-                    return false;
+                // Sale date can be DateTime or string
+                DateTime saleDate;
+                var dateObj = row.Cells["colSaleDate"].Value;
+                if (dateObj is DateTime dt)
+                {
+                    saleDate = dt.Date;
+                }
+                else
+                {
+                    string dateStr = AsString(dateObj);
+                    if (!DateTime.TryParseExact(dateStr, _dateFormat, _vn, DateTimeStyles.None, out saleDate))
+                    {
+                        if (!DateTime.TryParse(dateStr, _vn, DateTimeStyles.None, out saleDate))
+                            return false;
+                    }
+                    saleDate = saleDate.Date;
+                }
 
                 rec = new RevenueRecord
                 {
-                    SaleDate = saleDate.Date,
+                    SaleDate = saleDate,
                     TicketCount = ticketCount,
                     Amount = amount,
                     Region = region,
@@ -231,13 +248,9 @@ namespace xinchaothegioi
             }
         }
 
-        private string Cell(DataGridViewRow row, string name)
+        private string AsString(object val)
         {
-            try
-            {
-                return row.Cells[name]?.Value?.ToString() ?? string.Empty;
-            }
-            catch { return string.Empty; }
+            return val == null ? string.Empty : Convert.ToString(val, _vn);
         }
 
         // Filtering + Refresh -----------------------------------------------

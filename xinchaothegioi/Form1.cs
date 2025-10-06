@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Linq;
+using xinchaothegioi.Data;
+using xinchaothegioi.Services;
+using xinchaothegioi.Models;
+using xinchaothegioi.Entities;
 
 namespace xinchaothegioi
 {
@@ -14,13 +18,20 @@ namespace xinchaothegioi
         private MovieSummary _selectedMovie; // phim hiện tại
         private ToolTip _movieToolTip = new ToolTip();
 
+        // EF + Service
+        private readonly ApplicationDbContext _db = new ApplicationDbContext();
+        private SalesService _sales;
+
         public frmMain1()
         {
             InitializeComponent();
+            _sales = new SalesService(_db);
+
             HideAllExceptMenu();
             InitializeSeats();
             InitializeDataGridView();
             InitializeRegionComboBox();
+            LoadInvoicesToGrid();
             
             // Đặt ô tổng tiền chỉ đọc để tránh chỉnh sửa thủ công
             txtTotal.ReadOnly = true;
@@ -229,29 +240,23 @@ namespace xinchaothegioi
             if (_selectedMovie == null) { MessageBox.Show("Vui lòng chọn phim trước khi bán vé.", "Thiếu phim", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
             if (!IsValidPhoneNumber(phone)) { MessageBox.Show("Số điện thoại không hợp lệ!", "Thông tin không hợp lệ", MessageBoxButtons.OK, MessageBoxIcon.Warning); txtPhone.Focus(); return; }
 
-            string seatList = string.Join(", ", seatNames.OrderBy(s => int.Parse(s)));
-            int ticketCount = CountTickets(seatList);
-            int totalAmount = CalculateTotalAmount(seatList);
-            string saleDate = dtpSaleDate.Value.ToString("dd/MM/yyyy");
-            string movieTitle = _selectedMovie?.title ?? "";
+            try
+            {
+                // Lưu xuống DB
+                var kh = _sales.GetOrCreateCustomer(name, phone, gender, region);
+                var invoice = _sales.CreateInvoice(kh, _selectedMovie?.title ?? string.Empty, seatNames, dtpSaleDate.Value, AppConstants.GetSeatPrice);
 
-            dgvInformaton.Rows.Add(
-                GenerateInvoiceId(),
-                name,
-                gender,
-                phone,
-                region,
-                movieTitle,
-                seatList,
-                ticketCount.ToString(),
-                totalAmount.ToString("N0") + " VND",
-                saleDate
-            );
+                MessageBox.Show($"Đặt vé thành công!\nMã HĐ: HD{invoice.HoaDonId}\nPhim: {invoice.TenPhim}\nKhách hàng: {kh.Ten}\nGhế: {invoice.DanhSachGhe}\nTổng tiền: {invoice.SoTien:N0} VND", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            MessageBox.Show($"Đặt vé thành công!\nPhim: {movieTitle}\nKhách hàng: {name}\nGhế: {seatList}\nTổng tiền: {totalAmount:N0} VND", "Thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            ClearForm();
-            UpdateSeatStatus();
+                // Refresh grid + UI
+                ClearForm();
+                LoadInvoicesToGrid();
+                UpdateSeatStatus();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể tạo hóa đơn: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private bool IsValidPhoneNumber(string phone)
@@ -321,6 +326,8 @@ namespace xinchaothegioi
                 if (login.ShowDialog() == DialogResult.OK)
                 {
                     SetControlsVisible(true);
+                    LoadInvoicesToGrid();
+                    UpdateSeatStatus();
                 }
                 else
                 {
@@ -383,23 +390,53 @@ namespace xinchaothegioi
 
         private void InitializeDataGridView()
         {
+            dgvInformaton.AutoGenerateColumns = false;
             dgvInformaton.Columns.Clear();
-            dgvInformaton.Columns.Add("colInvoiceId", "Mã hóa đơn");
-            dgvInformaton.Columns.Add("colCustomerName", "Tên khách hàng");
-            dgvInformaton.Columns.Add("colGender", "Giới tính");
-            dgvInformaton.Columns.Add("colPhone", "SĐT");
-            dgvInformaton.Columns.Add("colRegion", "Khu vực");
-            dgvInformaton.Columns.Add("colMovieTitle", "Phim"); // thêm cột phim
-            dgvInformaton.Columns.Add("colSeat", "Ghế ngồi");
-            dgvInformaton.Columns.Add("colTicketCount", "Số lượng vé");
-            dgvInformaton.Columns.Add("colTotalAmount", "Thành tiền");
-            dgvInformaton.Columns.Add("colSaleDate", "Ngày bán vé");
+
+            // Define columns with DataPropertyName to bind DTO
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colInvoiceId", HeaderText = "Mã hóa đơn", DataPropertyName = "MaHoaDon" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colCustomerName", HeaderText = "Tên khách hàng", DataPropertyName = "TenKhachHang" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colGender", HeaderText = "Giới tính", DataPropertyName = "GioiTinh" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPhone", HeaderText = "SĐT", DataPropertyName = "SoDienThoai" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colRegion", HeaderText = "Khu vực", DataPropertyName = "KhuVuc" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMovieTitle", HeaderText = "Phim", DataPropertyName = "TenPhim" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSeat", HeaderText = "Ghế ngồi", DataPropertyName = "DanhSachGhe" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTicketCount", HeaderText = "Số lượng vé", DataPropertyName = "SoLuongVe" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colTotalAmount", HeaderText = "Thành tiền", DataPropertyName = "ThanhTienHienThi" });
+            dgvInformaton.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSaleDate", HeaderText = "Ngày bán vé", DataPropertyName = "NgayBan" });
 
             dgvInformaton.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvInformaton.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvInformaton.MultiSelect = false;
             dgvInformaton.AllowUserToAddRows = false;
             dgvInformaton.ReadOnly = true;
+        }
+
+        private void LoadInvoicesToGrid()
+        {
+            try
+            {
+                var data = _sales.GetInvoices()
+                    .Select(h => new InvoiceRow
+                    {
+                        MaHoaDon = "HD" + h.HoaDonId,
+                        TenKhachHang = h.KhachHang?.Ten,
+                        GioiTinh = h.KhachHang?.GioiTinh,
+                        SoDienThoai = h.KhachHang?.SoDienThoai,
+                        KhuVuc = h.KhachHang?.KhuVuc,
+                        TenPhim = h.TenPhim,
+                        DanhSachGhe = h.DanhSachGhe,
+                        SoLuongVe = h.ChiTietHoaDons?.Count ?? 0,
+                        ThanhTienHienThi = (h.SoTien).ToString("N0") + " VND",
+                        NgayBan = h.NgayMua
+                    })
+                    .ToList();
+                dgvInformaton.DataSource = data;
+            }
+            catch
+            {
+                // ignore if DB not ready
+            }
         }
 
         private void btnAddRegion_Click(object sender, EventArgs e)
@@ -447,7 +484,7 @@ namespace xinchaothegioi
             var seatBtn = sender as Button;
             if (seatBtn == null) return;
 
-            // Kiểm tra ghế đã mua trong khu vực hiện tại
+            // Kiểm tra ghế đã mua trong khu vực hiện tại (DB)
             if (IsSeatPurchased(seatBtn.Text))
             {
                 MessageBox.Show($"Ghế này đã được mua trong khu vực {cboRegion.SelectedItem?.ToString()}!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -477,28 +514,18 @@ namespace xinchaothegioi
 
         private bool IsSeatPurchased(string seatName)
         {
-            // Lấy khu vực hiện tại được chọn
             string currentRegion = cboRegion.SelectedItem?.ToString() ?? "";
             if (string.IsNullOrEmpty(currentRegion)) return false;
 
-            foreach (DataGridViewRow row in dgvInformaton.Rows)
+            // Query DB to check if seat is already purchased in current region
+            try
             {
-                if (row.IsNewRow) continue;
-                
-                // Kiểm tra cả ghế và khu vực
-                var seatCell = row.Cells["colSeat"].Value as string;
-                var regionCell = row.Cells["colRegion"].Value as string;
-                
-                if (seatCell != null && regionCell == currentRegion)
-                {
-                    var seats = seatCell.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (var s in seats)
-                    {
-                        if (s.Trim() == seatName) return true;
-                    }
-                }
+                return _sales.IsSeatPurchasedInRegion(currentRegion, seatName);
             }
-            return false;
+            catch
+            {
+                return false;
+            }
         }
 
         private void UpdateSeatStatus()
@@ -568,6 +595,16 @@ namespace xinchaothegioi
             }
         }
 
+        private bool TryParseInvoiceIdFromRow(DataGridViewRow row, out int id)
+        {
+            id = 0;
+            var val = row.Cells["colInvoiceId"].Value?.ToString();
+            if (string.IsNullOrEmpty(val)) return false;
+            // expected format: HD<number>
+            var digits = new string(val.Where(char.IsDigit).ToArray());
+            return int.TryParse(digits, out id);
+        }
+
         private void btnDelete_Click(object sender, EventArgs e)
         {
             if (dgvInformaton.SelectedRows.Count > 0)
@@ -579,9 +616,18 @@ namespace xinchaothegioi
                 {
                     foreach (DataGridViewRow row in dgvInformaton.SelectedRows)
                     {
-                        if (!row.IsNewRow)
-                            dgvInformaton.Rows.Remove(row);
+                        if (row.IsNewRow) continue;
+                        if (TryParseInvoiceIdFromRow(row, out int id))
+                        {
+                            var inv = _db.HoaDons.FirstOrDefault(h => h.HoaDonId == id);
+                            if (inv != null)
+                            {
+                                _db.HoaDons.Remove(inv);
+                            }
+                        }
                     }
+                    _db.SaveChanges();
+                    LoadInvoicesToGrid();
                     UpdateSeatStatus();
                     MessageBox.Show("Đã xóa vé thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -594,6 +640,7 @@ namespace xinchaothegioi
 
         private void btnEdit_Click(object sender, EventArgs e)
         {
+            // Giữ nguyên xử lý hiện có (cập nhật trên lưới). Lưu ý: chưa đồng bộ DB.
             if (dgvInformaton.SelectedRows.Count == 1)
             {
                 var row = dgvInformaton.SelectedRows[0];
@@ -608,7 +655,7 @@ namespace xinchaothegioi
                 {
                     if (editForm.ShowDialog() == DialogResult.OK)
                     {
-                        // Cập nhật lại thông tin lên dòng đã chọn
+                        // Cập nhật lại thông tin lên dòng đã chọn (UI-only)
                         row.Cells["colCustomerName"].Value = editForm.CustomerName;
                         row.Cells["colGender"].Value = editForm.Gender;
                         row.Cells["colPhone"].Value = editForm.Phone;
@@ -621,17 +668,10 @@ namespace xinchaothegioi
                         row.Cells["colTicketCount"].Value = ticketCount.ToString();
                         row.Cells["colTotalAmount"].Value = totalAmount.ToString("N0") + " VND";
                         
-                        // Cập nhật trạng thái ghế cho tất cả khu vực
+                        // Cập nhật trạng thái ghế từ DB
                         UpdateSeatStatus();
                         
-                        // Nếu khu vực hiện tại trong ComboBox trùng với khu vực vừa sửa, cập nhật lại
-                        string currentRegion = cboRegion.SelectedItem?.ToString() ?? "";
-                        if (currentRegion == editForm.Region || currentRegion == region)
-                        {
-                            ClearSelectedSeats(); // Xóa ghế đang chọn
-                        }
-                        
-                        MessageBox.Show("Đã cập nhật thông tin vé thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Đã cập nhật thông tin vé (chỉ hiển thị). Chức năng lưu DB chưa được triển khai trong bản này.", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
             }
