@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36414.22 d17.14
+VisualStudioVersion = 17.14.36414.22
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xinchaothegioi", "xinchaothegioi\xinchaothegioi.csproj", "{E74C61B3-BFA4-4A32-AF5D-CCBFE7B18CA2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManageSaleTicket.UI", "xinchaothegioi\ManageSaleTicket.UI.csproj", "{E74C61B3-BFA4-4A32-AF5D-CCBFE7B18CA2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManageSaleTicket.BUS", "ManageSaleTicket.BUS\ManageSaleTicket.BUS.csproj", "{03A44C8C-8C2F-4B18-AEF1-18AB2335DD0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ManageSaleTicket.DAL", "ManageSaleTicket.DAL\ManageSaleTicket.DAL.csproj", "{A2CB0722-3728-4528-A78F-8882224FD613}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{E74C61B3-BFA4-4A32-AF5D-CCBFE7B18CA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E74C61B3-BFA4-4A32-AF5D-CCBFE7B18CA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E74C61B3-BFA4-4A32-AF5D-CCBFE7B18CA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03A44C8C-8C2F-4B18-AEF1-18AB2335DD0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03A44C8C-8C2F-4B18-AEF1-18AB2335DD0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03A44C8C-8C2F-4B18-AEF1-18AB2335DD0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03A44C8C-8C2F-4B18-AEF1-18AB2335DD0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A2CB0722-3728-4528-A78F-8882224FD613}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A2CB0722-3728-4528-A78F-8882224FD613}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A2CB0722-3728-4528-A78F-8882224FD613}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A2CB0722-3728-4528-A78F-8882224FD613}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
