@@ -34,17 +34,6 @@
             System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
             System.Windows.Forms.DataVisualization.Charting.Legend legend2 = new System.Windows.Forms.DataVisualization.Charting.Legend();
             System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            this.dgvRevenue = new System.Windows.Forms.DataGridView();
-            this.colInvoiceId = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colCustomerName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colGender = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colPhone = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colRegion = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colSeat = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colTicketCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colTotalAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colSaleDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.chartRevenueColumn = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.dtpFromDate = new System.Windows.Forms.DateTimePicker();
             this.cboRegionFilter = new System.Windows.Forms.ComboBox();
             this.btnView = new System.Windows.Forms.Button();
@@ -52,116 +41,28 @@
             this.btnToday = new System.Windows.Forms.Button();
             this.label2 = new System.Windows.Forms.Label();
             this.lblFromDate = new System.Windows.Forms.Label();
-            this.lblTotalRevenue = new System.Windows.Forms.Label();
-            this.lblTotalTickets = new System.Windows.Forms.Label();
             this.dtpToDate = new System.Windows.Forms.DateTimePicker();
             this.lblToDate = new System.Windows.Forms.Label();
-            this.chartRevenuePie = new System.Windows.Forms.DataVisualization.Charting.Chart();
             this.lblSelectMovie = new System.Windows.Forms.Label();
             this.cboSelectMovie = new System.Windows.Forms.ComboBox();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvRevenue)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartRevenueColumn)).BeginInit();
+            this.lblTotalTickets = new System.Windows.Forms.Label();
+            this.lblTotalRevenue = new System.Windows.Forms.Label();
+            this.chartRevenuePie = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.chartRevenueColumn = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.colSaleDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTotalAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colTicketCount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colSeat = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colRegion = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colPhone = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colGender = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colCustomerName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colInvoiceId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.dgvRevenue = new System.Windows.Forms.DataGridView();
             ((System.ComponentModel.ISupportInitialize)(this.chartRevenuePie)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chartRevenueColumn)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvRevenue)).BeginInit();
             this.SuspendLayout();
-            // 
-            // dgvRevenue
-            // 
-            this.dgvRevenue.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvRevenue.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.colInvoiceId,
-            this.colCustomerName,
-            this.colGender,
-            this.colPhone,
-            this.colRegion,
-            this.colSeat,
-            this.colTicketCount,
-            this.colTotalAmount,
-            this.colSaleDate});
-            this.dgvRevenue.Location = new System.Drawing.Point(12, 165);
-            this.dgvRevenue.Name = "dgvRevenue";
-            this.dgvRevenue.RowHeadersWidth = 51;
-            this.dgvRevenue.RowTemplate.Height = 24;
-            this.dgvRevenue.Size = new System.Drawing.Size(504, 323);
-            this.dgvRevenue.TabIndex = 0;
-            // 
-            // colInvoiceId
-            // 
-            this.colInvoiceId.HeaderText = "Mã hóa đơn";
-            this.colInvoiceId.MinimumWidth = 6;
-            this.colInvoiceId.Name = "colInvoiceId";
-            this.colInvoiceId.Width = 125;
-            // 
-            // colCustomerName
-            // 
-            this.colCustomerName.HeaderText = "Tên khách hàng";
-            this.colCustomerName.MinimumWidth = 6;
-            this.colCustomerName.Name = "colCustomerName";
-            this.colCustomerName.Width = 125;
-            // 
-            // colGender
-            // 
-            this.colGender.HeaderText = "Giới tính";
-            this.colGender.MinimumWidth = 6;
-            this.colGender.Name = "colGender";
-            this.colGender.Width = 125;
-            // 
-            // colPhone
-            // 
-            this.colPhone.HeaderText = "Sđt";
-            this.colPhone.MinimumWidth = 6;
-            this.colPhone.Name = "colPhone";
-            this.colPhone.Width = 125;
-            // 
-            // colRegion
-            // 
-            this.colRegion.HeaderText = "Khu vực";
-            this.colRegion.MinimumWidth = 6;
-            this.colRegion.Name = "colRegion";
-            this.colRegion.Width = 125;
-            // 
-            // colSeat
-            // 
-            this.colSeat.HeaderText = "Ghế ngồi";
-            this.colSeat.MinimumWidth = 6;
-            this.colSeat.Name = "colSeat";
-            this.colSeat.Width = 125;
-            // 
-            // colTicketCount
-            // 
-            this.colTicketCount.HeaderText = "Số lượng vé";
-            this.colTicketCount.MinimumWidth = 6;
-            this.colTicketCount.Name = "colTicketCount";
-            this.colTicketCount.Width = 125;
-            // 
-            // colTotalAmount
-            // 
-            this.colTotalAmount.HeaderText = "Thành tiền";
-            this.colTotalAmount.MinimumWidth = 6;
-            this.colTotalAmount.Name = "colTotalAmount";
-            this.colTotalAmount.Width = 125;
-            // 
-            // colSaleDate
-            // 
-            this.colSaleDate.HeaderText = "Ngày bán vé";
-            this.colSaleDate.MinimumWidth = 6;
-            this.colSaleDate.Name = "colSaleDate";
-            this.colSaleDate.Width = 125;
-            // 
-            // chartRevenueColumn
-            // 
-            chartArea1.Name = "ChartArea1";
-            this.chartRevenueColumn.ChartAreas.Add(chartArea1);
-            legend1.Name = "Legend1";
-            this.chartRevenueColumn.Legends.Add(legend1);
-            this.chartRevenueColumn.Location = new System.Drawing.Point(522, 181);
-            this.chartRevenueColumn.Name = "chartRevenueColumn";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            this.chartRevenueColumn.Series.Add(series1);
-            this.chartRevenueColumn.Size = new System.Drawing.Size(427, 283);
-            this.chartRevenueColumn.TabIndex = 1;
-            this.chartRevenueColumn.Text = "chart1";
             // 
             // dtpFromDate
             // 
@@ -231,24 +132,6 @@
             this.lblFromDate.TabIndex = 5;
             this.lblFromDate.Text = "Từ ngày:";
             // 
-            // lblTotalRevenue
-            // 
-            this.lblTotalRevenue.AutoSize = true;
-            this.lblTotalRevenue.Location = new System.Drawing.Point(778, 139);
-            this.lblTotalRevenue.Name = "lblTotalRevenue";
-            this.lblTotalRevenue.Size = new System.Drawing.Size(100, 16);
-            this.lblTotalRevenue.TabIndex = 5;
-            this.lblTotalRevenue.Text = "Tổng doanh thu";
-            // 
-            // lblTotalTickets
-            // 
-            this.lblTotalTickets.AutoSize = true;
-            this.lblTotalTickets.Location = new System.Drawing.Point(546, 148);
-            this.lblTotalTickets.Name = "lblTotalTickets";
-            this.lblTotalTickets.Size = new System.Drawing.Size(120, 16);
-            this.lblTotalTickets.TabIndex = 5;
-            this.lblTotalTickets.Text = "Tổng số vé đã bán";
-            // 
             // dtpToDate
             // 
             this.dtpToDate.Location = new System.Drawing.Point(431, 32);
@@ -265,23 +148,6 @@
             this.lblToDate.Size = new System.Drawing.Size(67, 16);
             this.lblToDate.TabIndex = 5;
             this.lblToDate.Text = "Đến ngày:";
-            // 
-            // chartRevenuePie
-            // 
-            chartArea2.Name = "ChartArea1";
-            this.chartRevenuePie.ChartAreas.Add(chartArea2);
-            legend2.Name = "Legend1";
-            this.chartRevenuePie.Legends.Add(legend2);
-            this.chartRevenuePie.Location = new System.Drawing.Point(947, 21);
-            this.chartRevenuePie.Name = "chartRevenuePie";
-            series2.ChartArea = "ChartArea1";
-            series2.Legend = "Legend1";
-            series2.Name = "Series1";
-            this.chartRevenuePie.Series.Add(series2);
-            this.chartRevenuePie.Size = new System.Drawing.Size(233, 134);
-            this.chartRevenuePie.TabIndex = 7;
-            this.chartRevenuePie.Text = "chart1";
-            this.chartRevenuePie.Click += new System.EventHandler(this.chart1_Click);
             // 
             // lblSelectMovie
             // 
@@ -300,6 +166,140 @@
             this.cboSelectMovie.Size = new System.Drawing.Size(121, 24);
             this.cboSelectMovie.TabIndex = 3;
             this.cboSelectMovie.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            // 
+            // lblTotalTickets
+            // 
+            this.lblTotalTickets.AutoSize = true;
+            this.lblTotalTickets.Location = new System.Drawing.Point(546, 148);
+            this.lblTotalTickets.Name = "lblTotalTickets";
+            this.lblTotalTickets.Size = new System.Drawing.Size(120, 16);
+            this.lblTotalTickets.TabIndex = 5;
+            this.lblTotalTickets.Text = "Tổng số vé đã bán";
+            // 
+            // lblTotalRevenue
+            // 
+            this.lblTotalRevenue.AutoSize = true;
+            this.lblTotalRevenue.Location = new System.Drawing.Point(778, 139);
+            this.lblTotalRevenue.Name = "lblTotalRevenue";
+            this.lblTotalRevenue.Size = new System.Drawing.Size(100, 16);
+            this.lblTotalRevenue.TabIndex = 5;
+            this.lblTotalRevenue.Text = "Tổng doanh thu";
+            // 
+            // chartRevenuePie
+            // 
+            chartArea1.Name = "ChartArea1";
+            this.chartRevenuePie.ChartAreas.Add(chartArea1);
+            legend1.Name = "Legend1";
+            this.chartRevenuePie.Legends.Add(legend1);
+            this.chartRevenuePie.Location = new System.Drawing.Point(947, 21);
+            this.chartRevenuePie.Name = "chartRevenuePie";
+            series1.ChartArea = "ChartArea1";
+            series1.Legend = "Legend1";
+            series1.Name = "Series1";
+            this.chartRevenuePie.Series.Add(series1);
+            this.chartRevenuePie.Size = new System.Drawing.Size(233, 134);
+            this.chartRevenuePie.TabIndex = 7;
+            this.chartRevenuePie.Text = "chart1";
+            this.chartRevenuePie.Click += new System.EventHandler(this.chart1_Click);
+            // 
+            // chartRevenueColumn
+            // 
+            chartArea2.Name = "ChartArea1";
+            this.chartRevenueColumn.ChartAreas.Add(chartArea2);
+            legend2.Name = "Legend1";
+            this.chartRevenueColumn.Legends.Add(legend2);
+            this.chartRevenueColumn.Location = new System.Drawing.Point(522, 181);
+            this.chartRevenueColumn.Name = "chartRevenueColumn";
+            series2.ChartArea = "ChartArea1";
+            series2.Legend = "Legend1";
+            series2.Name = "Series1";
+            this.chartRevenueColumn.Series.Add(series2);
+            this.chartRevenueColumn.Size = new System.Drawing.Size(427, 283);
+            this.chartRevenueColumn.TabIndex = 1;
+            this.chartRevenueColumn.Text = "chart1";
+            // 
+            // colSaleDate
+            // 
+            this.colSaleDate.HeaderText = "Ngày bán vé";
+            this.colSaleDate.MinimumWidth = 6;
+            this.colSaleDate.Name = "colSaleDate";
+            this.colSaleDate.Width = 125;
+            // 
+            // colTotalAmount
+            // 
+            this.colTotalAmount.HeaderText = "Thành tiền";
+            this.colTotalAmount.MinimumWidth = 6;
+            this.colTotalAmount.Name = "colTotalAmount";
+            this.colTotalAmount.Width = 125;
+            // 
+            // colTicketCount
+            // 
+            this.colTicketCount.HeaderText = "Số lượng vé";
+            this.colTicketCount.MinimumWidth = 6;
+            this.colTicketCount.Name = "colTicketCount";
+            this.colTicketCount.Width = 125;
+            // 
+            // colSeat
+            // 
+            this.colSeat.HeaderText = "Ghế ngồi";
+            this.colSeat.MinimumWidth = 6;
+            this.colSeat.Name = "colSeat";
+            this.colSeat.Width = 125;
+            // 
+            // colRegion
+            // 
+            this.colRegion.HeaderText = "Khu vực";
+            this.colRegion.MinimumWidth = 6;
+            this.colRegion.Name = "colRegion";
+            this.colRegion.Width = 125;
+            // 
+            // colPhone
+            // 
+            this.colPhone.HeaderText = "Sđt";
+            this.colPhone.MinimumWidth = 6;
+            this.colPhone.Name = "colPhone";
+            this.colPhone.Width = 125;
+            // 
+            // colGender
+            // 
+            this.colGender.HeaderText = "Giới tính";
+            this.colGender.MinimumWidth = 6;
+            this.colGender.Name = "colGender";
+            this.colGender.Width = 125;
+            // 
+            // colCustomerName
+            // 
+            this.colCustomerName.HeaderText = "Tên khách hàng";
+            this.colCustomerName.MinimumWidth = 6;
+            this.colCustomerName.Name = "colCustomerName";
+            this.colCustomerName.Width = 125;
+            // 
+            // colInvoiceId
+            // 
+            this.colInvoiceId.HeaderText = "Mã hóa đơn";
+            this.colInvoiceId.MinimumWidth = 6;
+            this.colInvoiceId.Name = "colInvoiceId";
+            this.colInvoiceId.Width = 125;
+            // 
+            // dgvRevenue
+            // 
+            this.dgvRevenue.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvRevenue.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.colInvoiceId,
+            this.colCustomerName,
+            this.colGender,
+            this.colPhone,
+            this.colRegion,
+            this.colSeat,
+            this.colTicketCount,
+            this.colTotalAmount,
+            this.colSaleDate});
+            this.dgvRevenue.Location = new System.Drawing.Point(12, 165);
+            this.dgvRevenue.Name = "dgvRevenue";
+            this.dgvRevenue.RowHeadersWidth = 51;
+            this.dgvRevenue.RowTemplate.Height = 24;
+            this.dgvRevenue.Size = new System.Drawing.Size(504, 323);
+            this.dgvRevenue.TabIndex = 0;
             // 
             // ViewRevenue
             // 
@@ -325,18 +325,15 @@
             this.Name = "ViewRevenue";
             this.Text = "ViewRevenue";
             this.Load += new System.EventHandler(this.ViewRevenue_Load);
-            ((System.ComponentModel.ISupportInitialize)(this.dgvRevenue)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.chartRevenueColumn)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.chartRevenuePie)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.chartRevenueColumn)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvRevenue)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
         }
 
         #endregion
-
-        private System.Windows.Forms.DataGridView dgvRevenue;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartRevenueColumn;
         private System.Windows.Forms.DateTimePicker dtpFromDate;
         private System.Windows.Forms.ComboBox cboRegionFilter;
         private System.Windows.Forms.Button btnView;
@@ -344,21 +341,23 @@
         private System.Windows.Forms.Button btnToday;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label lblFromDate;
-        private System.Windows.Forms.Label lblTotalRevenue;
-        private System.Windows.Forms.Label lblTotalTickets;
         private System.Windows.Forms.DateTimePicker dtpToDate;
         private System.Windows.Forms.Label lblToDate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colInvoiceId;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colCustomerName;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colGender;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colPhone;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colRegion;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colSeat;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colTicketCount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colTotalAmount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colSaleDate;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartRevenuePie;
         private System.Windows.Forms.Label lblSelectMovie;
         private System.Windows.Forms.ComboBox cboSelectMovie;
+        private System.Windows.Forms.Label lblTotalTickets;
+        private System.Windows.Forms.Label lblTotalRevenue;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartRevenuePie;
+        private System.Windows.Forms.DataVisualization.Charting.Chart chartRevenueColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colSaleDate;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTotalAmount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colTicketCount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colSeat;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colRegion;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPhone;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colGender;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colCustomerName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colInvoiceId;
+        private System.Windows.Forms.DataGridView dgvRevenue;
     }
 }

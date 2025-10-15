@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2008/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
+  <DataSources>
+    <DataSource Name="InvoiceDataSource">
+      <ConnectionProperties>
+        <DataProvider>System.Data.DataSet</DataProvider>
+        <ConnectString />
+      </ConnectionProperties>
+      <rd:DataSourceID>0f6f7f6c-6c49-4ed6-8f43-9c0ab5d1a0fa</rd:DataSourceID>
+    </DataSource>
+  </DataSources>
+  <Body>
+    <ReportItems>
+      <Tablix Name="Tablix1">
+        <TablixBody>
+          <TablixColumns>
+            <TablixColumn><Width>1.2in</Width></TablixColumn>
+            <TablixColumn><Width>1.5in</Width></TablixColumn>
+            <TablixColumn><Width>0.6in</Width></TablixColumn>
+            <TablixColumn><Width>1.1in</Width></TablixColumn>
+            <TablixColumn><Width>1.1in</Width></TablixColumn>
+            <TablixColumn><Width>1.2in</Width></TablixColumn>
+            <TablixColumn><Width>0.7in</Width></TablixColumn>
+            <TablixColumn><Width>1.2in</Width></TablixColumn>
+          </TablixColumns>
+          <TablixRows>
+            <TablixRow>
+              <Height>0.25in</Height>
+              <TablixCells>
+                <TablixCell><CellContents><Textbox Name="hdr1"><Value>M? H?</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr2"><Value>Kh?ch h?ng</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr3"><Value>GT</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr4"><Value>S?T</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr5"><Value>Khu v?c</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr6"><Value>Gh?</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr7"><Value>V?</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="hdr8"><Value>Ti?n</Value></Textbox></CellContents></TablixCell>
+              </TablixCells>
+            </TablixRow>
+            <TablixRow>
+              <Height>0.25in</Height>
+              <TablixCells>
+                <TablixCell><CellContents><Textbox Name="val1"><Value>=Fields!MaHoaDon.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val2"><Value>=Fields!TenKhachHang.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val3"><Value>=Fields!GioiTinh.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val4"><Value>=Fields!SoDienThoai.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val5"><Value>=Fields!KhuVuc.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val6"><Value>=Fields!DanhSachGhe.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val7"><Value>=Fields!SoLuongVe.Value</Value></Textbox></CellContents></TablixCell>
+                <TablixCell><CellContents><Textbox Name="val8"><Value>=Fields!ThanhTienHienThi.Value</Value></Textbox></CellContents></TablixCell>
+              </TablixCells>
+            </TablixRow>
+          </TablixRows>
+        </TablixBody>
+        <DataSetName>InvoiceRowDataSet</DataSetName>
+        <Top>0.2in</Top>
+        <Left>0.2in</Left>
+        <Height>0.5in</Height>
+        <Width>8.6in</Width>
+      </Tablix>
+    </ReportItems>
+    <Height>1.2in</Height>
+  </Body>
+  <Width>9in</Width>
+  <DataSets>
+    <DataSet Name="InvoiceRowDataSet">
+      <Fields>
+        <Field Name="MaHoaDon"><DataField>MaHoaDon</DataField></Field>
+        <Field Name="TenKhachHang"><DataField>TenKhachHang</DataField></Field>
+        <Field Name="GioiTinh"><DataField>GioiTinh</DataField></Field>
+        <Field Name="SoDienThoai"><DataField>SoDienThoai</DataField></Field>
+        <Field Name="KhuVuc"><DataField>KhuVuc</DataField></Field>
+        <Field Name="TenPhim"><DataField>TenPhim</DataField></Field>
+        <Field Name="DanhSachGhe"><DataField>DanhSachGhe</DataField></Field>
+        <Field Name="SoLuongVe"><DataField>SoLuongVe</DataField></Field>
+        <Field Name="ThanhTienHienThi"><DataField>ThanhTienHienThi</DataField></Field>
+        <Field Name="NgayBan"><DataField>NgayBan</DataField></Field>
+      </Fields>
+      <Query><DataSourceName>InvoiceDataSource</DataSourceName><CommandText /></Query>
+    </DataSet>
+  </DataSets>
+</Report>

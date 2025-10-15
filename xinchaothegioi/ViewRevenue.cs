@@ -362,7 +362,9 @@ namespace xinchaothegioi
         }
 
         // Events ------------------------------------------------------------
-        private void ViewRevenue_Load(object sender, EventArgs e) { }
+        private void ViewRevenue_Load(object sender, EventArgs e) {
+            this.reportViewer1.RefreshReport();
+        }
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e) { if (_allRecords.Count > 0) RefreshAll(); }
         private void dateTimePicker1_ValueChanged(object sender, EventArgs e) { if (_allRecords.Count > 0) RefreshAll(); }
         private void chart1_Click(object sender, EventArgs e) { }
