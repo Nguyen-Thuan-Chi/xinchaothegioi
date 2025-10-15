@@ -18,13 +18,14 @@ namespace xinchaothegioi
         private MovieSummary _selectedMovie; // phim hiện tại
         private ToolTip _movieToolTip = new ToolTip();
 
-        // Use BUS only
+        // EF + Service
+        private readonly ApplicationDbContext _db = new ApplicationDbContext();
         private SalesService _sales;
 
         public frmMain1()
         {
             InitializeComponent();
-            _sales = new SalesService();
+            _sales = new SalesService(_db);
 
             HideAllExceptMenu();
             InitializeSeats();
@@ -618,15 +619,14 @@ namespace xinchaothegioi
                         if (row.IsNewRow) continue;
                         if (TryParseInvoiceIdFromRow(row, out int id))
                         {
-                            // mark id to delete via service
-                            _pendingDeleteIds.Add(id);
+                            var inv = _db.HoaDons.FirstOrDefault(h => h.HoaDonId == id);
+                            if (inv != null)
+                            {
+                                _db.HoaDons.Remove(inv);
+                            }
                         }
                     }
-                    if (_pendingDeleteIds.Count > 0)
-                    {
-                        _sales.DeleteInvoices(_pendingDeleteIds);
-                        _pendingDeleteIds.Clear();
-                    }
+                    _db.SaveChanges();
                     LoadInvoicesToGrid();
                     UpdateSeatStatus();
                     MessageBox.Show("Đã xóa vé thành công!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -686,8 +686,6 @@ namespace xinchaothegioi
 
         }
 
-        private readonly List<int> _pendingDeleteIds = new List<int>();
-
         private void cboRegion_SelectedIndexChanged(object sender, EventArgs e)
         {
 
@@ -730,7 +728,7 @@ namespace xinchaothegioi
 
         private void mnuReports_Click(object sender, EventArgs e)
         {
-            // Mở ReportViewer RDLC (SalesReport)
+            // Mở form báo cáo tổng hợp (frmReport)
             if (dgvInformaton.Rows.Count == 0 || (dgvInformaton.Rows.Count == 1 && dgvInformaton.AllowUserToAddRows))
             {
                 MessageBox.Show("Chưa có dữ liệu vé để xem báo cáo!\nVui lòng bán vé trước.", "Không có dữ liệu", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -738,32 +736,15 @@ namespace xinchaothegioi
             }
             try
             {
-                var rows = new System.Collections.Generic.List<InvoiceRow>();
-                foreach (DataGridViewRow r in dgvInformaton.Rows)
+                using (var rpt = new frmReport())
                 {
-                    if (r.IsNewRow) continue;
-                    rows.Add(new InvoiceRow
-                    {
-                        MaHoaDon = Convert.ToString(r.Cells["colInvoiceId"].Value),
-                        TenKhachHang = Convert.ToString(r.Cells["colCustomerName"].Value),
-                        GioiTinh = Convert.ToString(r.Cells["colGender"].Value),
-                        SoDienThoai = Convert.ToString(r.Cells["colPhone"].Value),
-                        KhuVuc = Convert.ToString(r.Cells["colRegion"].Value),
-                        TenPhim = Convert.ToString(r.Cells["colMovieTitle"].Value),
-                        DanhSachGhe = Convert.ToString(r.Cells["colSeat"].Value),
-                        SoLuongVe = int.TryParse(Convert.ToString(r.Cells["colTicketCount"].Value), out var sl) ? sl : 0,
-                        ThanhTienHienThi = Convert.ToString(r.Cells["colTotalAmount"].Value),
-                        NgayBan = (r.Cells["colSaleDate"].Value is DateTime d) ? d : DateTime.Now
-                    });
+                    rpt.SetSourceGrid(dgvInformaton);
+                    rpt.ShowDialog();
                 }
-
-                var frm = new xinchaothegioi.Report.frmSalesReport();
-                frm.LoadData(rows);
-                frm.ShowDialog(this);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Không thể mở báo cáo RDLC: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Không thể mở báo cáo: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

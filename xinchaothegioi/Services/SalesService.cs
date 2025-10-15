@@ -7,13 +7,12 @@ using xinchaothegioi.Entities;
 
 namespace xinchaothegioi.Services
 {
-    public class SalesService : IDisposable
+    public class SalesService
     {
         private readonly ApplicationDbContext _db;
-
-        public SalesService()
+        public SalesService(ApplicationDbContext db)
         {
-            _db = new ApplicationDbContext();
+            _db = db;
         }
 
         public IEnumerable<HoaDon> GetInvoices()
@@ -99,15 +98,8 @@ namespace xinchaothegioi.Services
         {
             if (string.IsNullOrWhiteSpace(region) || string.IsNullOrWhiteSpace(seatNumber)) return false;
 
-            // Compare exact seat numbers within comma-separated list
-            return _db.HoaDons
-                .Include(h => h.KhachHang)
-                .Where(h => h.KhachHang.KhuVuc == region && h.DanhSachGhe != null)
-                .AsEnumerable()
-                .Any(h => h.DanhSachGhe
-                    .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(s => s.Trim())
-                    .Any(s => string.Equals(s, seatNumber, StringComparison.Ordinal)));
+            return _db.HoaDons.Include(h => h.KhachHang)
+                .Any(h => h.KhachHang.KhuVuc == region && h.DanhSachGhe.Contains(seatNumber));
         }
 
         private bool IsValidPhoneNumber(string phone)
@@ -117,30 +109,6 @@ namespace xinchaothegioi.Services
             if (phone.Length < 10 || phone.Length > 11) return false;
             if (!phone.StartsWith("0")) return false;
             return phone.All(char.IsDigit);
-        }
-
-        public void DeleteInvoices(IEnumerable<int> ids)
-        {
-            if (ids == null) return;
-            var idSet = new HashSet<int>(ids);
-            var invoices = _db.HoaDons.Include(h => h.ChiTietHoaDons).Where(h => idSet.Contains(h.HoaDonId)).ToList();
-            if (invoices.Count == 0) return;
-
-            // Remove details first if necessary (cascade may handle this)
-            foreach (var inv in invoices)
-            {
-                if (inv.ChiTietHoaDons != null)
-                {
-                    _db.Set<ChiTietHoaDon>().RemoveRange(inv.ChiTietHoaDons);
-                }
-                _db.HoaDons.Remove(inv);
-            }
-            _db.SaveChanges();
-        }
-
-        public void Dispose()
-        {
-            _db?.Dispose();
         }
     }
 }
